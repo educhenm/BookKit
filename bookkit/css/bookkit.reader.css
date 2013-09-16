@@ -1,0 +1,20 @@
+.-BookKit-BKAnnotationStyleHighlight.-BookKit-BKAnnotationColorRed { background-color: #ff9380; } /* Marachino */
+.-BookKit-BKAnnotationStyleHighlight.-BookKit-BKAnnotationColorBlue { background-color: #80caff; } /* Aqua */
+.-BookKit-BKAnnotationStyleHighlight.-BookKit-BKAnnotationColorGreen { background-color: #b4ff6d; } /* Lime */
+.-BookKit-BKAnnotationStyleHighlight.-BookKit-BKAnnotationColorYellow { background-color: #ffff6d; } /* Banana */
+.-BookKit-BKAnnotationStyleHighlight.-BookKit-BKAnnotationColorPink { background-color: #ff80d5; } /* Carnation */
+.-BookKit-BKAnnotationStyleHighlight.-BookKit-BKAnnotationColorPurple { background-color: #b063ff; } /* Grape */
+.-BookKit-BKAnnotationStyleUnderline.-BookKit-BKAnnotationColorRed { border-bottom: 2px solid #fb0011; }
+.-BookKit-BKAnnotationStyleUnderline.-BookKit-BKAnnotationColorBlue { border-bottom: 2px solid #0080ff; }
+.-BookKit-BKAnnotationStyleUnderline.-BookKit-BKAnnotationColorGreen { border-bottom: 2px solid #44b705; }
+.-BookKit-BKAnnotationStyleUnderline.-BookKit-BKAnnotationColorPurple { border-bottom: 2px solid #8000ff; }
+.-BookKit-BKAnnotationStyleUnderline.-BookKit-BKAnnotationColorBlack { border-bottom: 2px solid black; }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationColorRed { color: #fb0011; }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationColorBlue { color: #0080ff; }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationColorGreen { color: #44b705; }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationColorPurple { color: #8000ff; }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationColorBlack { color: black; }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationStyleMarginLeft, 
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationStyleMarginRight { text-indent: 0; text-align: center; line-height: 1em; }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationStyleMarginLeft { -webkit-transform: rotate(-90deg); }
+.-BookKit-BKAnnotationTypeNote.-BookKit-BKAnnotationStyleMarginRight { -webkit-transform: rotate(90deg); }

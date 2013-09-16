@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>BookKit</title>
+
+    <link rel="stylesheet" type="text/css" href="bookkit/css/bookkit.css"/>
+    <link rel="stylesheet" type="text/css" href="bookkit/css/bookkit.fonts.css"/>
+
+    <style type="text/css">
+    #-BookKit-Spread {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #-BookKit-Spread iframe {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    </style>
+
+    <script type="text/javascript" src="bookkit/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="bookkit/lib/underscore.js"></script>
+    <script type="text/javascript" src="bookkit/lib/backbone.js"></script>
+
+    <script type="text/javascript" src="bookkit/js/bookkit.ui.js"></script>
+
+    <script type="text/javascript">
+      $(window).load(function () {
+          var spine = new BookKit.UI.Spine(["A", "B", "C", "D", "E", "F", "G", "H", "I"]);
+          var spread = new BookKit.UI.Spread({el: 'body'}, spine, 3); 
+
+          spread.render();
+          
+      });
+    </script>
+  </head>
+  <body>
+
+  </body>
+</html>
+
