@@ -28,33 +28,31 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-/* 
- * The Annotation model corrosponds to notes, bookmarks, and higlights
- * which are subsequently drawn (if done so using BookKit) using an
- * AnnotationCanvas. 
- *
- * Annotation Types:
- *    BKAnnotationTypeBookmark
- *    BKAnnotationTypeHighlight
- *    BKAnnotationTypeNote
- *
- * Annotation Styles (not valid for all types):
- *    BKAnnotationStyleIcon (Bookmark and Note types)
- *    BKAnnotationStyleHighlight (Highlight type)
- *    BKAnnotationStyleUnderline (Highlight type)
- *    BKAnnotationStyleInline (Note type)
- *
- * Annotaton Colors (different effects per type, nothing for bookmarks)
- *    BKAnnotationColorYellow
- *    BKAnnotationColorPink
- *    BKAnnotationColorRed
- *    BKAnnotationColorPurple
- *    BKAnnotationColorBlue
- *    BKAnnotationColorGreen
- *    BKAnnotationColorBlack (Underline & Note only)
- *
- */
-
+// Annotation Model
+// ----------------
+// The Annotation model corrosponds to notes, bookmarks, and higlights
+// which are subsequently drawn (if done so using BookKit) using an
+// AnnotationCanvas. 
+//
+// Annotation Types:
+//    BKAnnotationTypeBookmark
+//    BKAnnotationTypeHighlight
+//    BKAnnotationTypeNote
+//
+// Annotation Styles (not valid for all types):
+//    BKAnnotationStyleIcon (Bookmark and Note types)
+//    BKAnnotationStyleHighlight (Highlight type)
+//    BKAnnotationStyleUnderline (Highlight type)
+//    BKAnnotationStyleInline (Note type)
+//
+// Annotaton Colors (different effects per type, nothing for bookmarks)
+//    BKAnnotationColorYellow
+//    BKAnnotationColorPink
+//    BKAnnotationColorRed
+//    BKAnnotationColorPurple
+//    BKAnnotationColorBlue
+//    BKAnnotationColorGreen
+//    BKAnnotationColorBlack (Underline & Note only)
 var Annotation = BookKit.Annotation = function(attributes) {
     BookKit.BaseClass.apply(this, arguments);
 };
@@ -95,6 +93,11 @@ _.extend(BookKit.Annotation.prototype, BookKit.BaseClass.prototype, {
 
 });
 
+// Annotation Canvas
+// -----------------
+// The annotation canvas handles the drawing of annotations. Highlights
+// are actually drawn on an HTML5 canvas element (rather than inline in
+// the HTML, potentially complicating our resolution of new CFIs).
 var AnnotationCanvas = BookKit.AnnotationCanvas = function(attributes) {
     BookKit.BaseClass.apply(this, arguments);
 };
@@ -119,14 +122,18 @@ _.extend(BookKit.AnnotationCanvas.prototype, BookKit.BaseClass.prototype, {
         this.refresh();
     },
 
+    // Redraw the entire annotation canvas.
     refresh: function() {
         $('body').css({'background-image':"url(" + this.canvas.toDataURL("image/png")+ ")" });
     },
 
-    // annotationCanvas.addAnnotation(annotationObject);
-    // annotationCanvas.addAnnotation('epubcfi(...)', 
-    //    'BKAnnotationTypeHighlight', 'BKAnnotationStyleHighlight', 'BKAnnotationColorYellow', 
-    //    noteText);
+    // Add an annotation to the annotation canvas for a CFI of the given 
+    // type with the given style and color.
+    // Example:
+    //    annotationCanvas.addAnnotation("epubcfi(/6/12!/4/2/2,/1:0,/1:28)",
+    //        BookKit.Constants.BKAnnotationTypeHighlight,
+    //        BookKit.Constants.BKAnnotationStyleHighlight,
+    //        BookKit.Constants.BKAnnotationColorRed);
     addAnnotation: function() {
         var annotationOrCFI = arguments[0];
         var annotaiton = undefined;
@@ -160,6 +167,7 @@ _.extend(BookKit.AnnotationCanvas.prototype, BookKit.BaseClass.prototype, {
         console.log("Done drawing", cfi.get("cfi"));
     },
 
+    // Remove an annotation from the canvas.
     removeAnnotation: function(annotation) {
         var annotationOrCFI = arguments[0];
         var annotaiton = undefined;
@@ -224,21 +232,6 @@ _.extend(BookKit.AnnotationCanvas.prototype, BookKit.BaseClass.prototype, {
         var highlightRects = [];
 
         var canvas_context = this.canvas.getContext('2d');
-
-        /*
-        _.each(annotation.pixelRects(), function(rect, index, rects) {
-            if (style == BookKit.Constants.BKAnnotationStyleHighlight) {
-                canvas_context.fillStyle = BookKit.Config.Colors.Highlight[color];
-                canvas_context.fillRect(rect.left, rect.top, rect.width, rect.height);
-            }
-            if (style == BookKit.Constants.BKAnnotationStyleUnderline) {
-                var top = rect.top + rect.height - BookKit.Config.Annotations.underlineThickness;
-                canvas_context.fillStyle = BookKit.Config.Colors.Underline[color];
-                canvas_context.fillRect(rect.left, top, 
-                    rect.width, BookKit.Config.Annotations.underlineThickness);
-            }
-        }, this);
-        */
 
         _.each(cfi.ranges, function(range, index, ranges) {
             // console.log("highlight range", range.startContainer, range.endContainer);

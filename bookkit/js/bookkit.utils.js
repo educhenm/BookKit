@@ -28,12 +28,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-/*
- * BookKit.Utils
- *
- * Utility and convenience functions for BookKit. 
- *
- */
+// BookKit.Utils
+// =============
+// Utility and convenience functions for BookKit. 
 
 BookKit.Utils.columnNumberForPosition = function(left) {
     var columnWidth = $(window).innerWidth();
@@ -55,6 +52,8 @@ BookKit.Utils.rangeForCurrentColumn = function() {
     return range;
 };
 
+// Take a given selection range that may span DOM elements and return 
+// an array of equivelent ranges that do not.
 // http://stackoverflow.com/a/12823606
 BookKit.Utils.getSafeRanges = function(dangerous) {
     var a = dangerous.commonAncestorContainer;
@@ -138,6 +137,7 @@ BookKit.Utils.getSafeRanges = function(dangerous) {
     return response;
 };
 
+// Make a given string "safe" as a CSS identifier or class name.
 BookKit.Utils.makeSafeForCSS = function(name) {
     return name.replace(/[^a-z0-9]/g, function(s) {
         var c = s.charCodeAt(0);
@@ -149,8 +149,12 @@ BookKit.Utils.makeSafeForCSS = function(name) {
 
 
 /////////////////////////////////////////////////////////////////////// 
+// BookKit.BaseClass
+// -----------------
 // Lightweight internal model class for BookKit that handles default
 // attributes/setting/getting.
+// Meant to be roughly compatible with Backbone.Model in terms of
+// initialization and attributes.
 var BaseClass = BookKit.BaseClass = function(attributes) {
     var attrs = attributes || {};
     // attrs = _.defaults({}, attrs, _.result(this, 'defaults'));

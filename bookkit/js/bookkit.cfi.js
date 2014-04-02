@@ -30,14 +30,22 @@
 
 var _parsed_cfis = BookKit._parsed_cfis = {};
 
+// BookKit.CFI
+// ===========
 // The CFI model disconnects parsing the CFI string from resolving the
 // steps in the DOM, so that BookKit could potentially be passed a list
 // of steps that have already been parsed.
 var CFI = BookKit.CFI = function(attributes) {
     BookKit.BaseClass.apply(this, arguments);
 };
+
+// Class Methods
+// -------------
+// These are intended for the construction of BookKit.CFI objects and
+// CFI strings.
 _.extend(BookKit.CFI, {
-    // A CFI for the top location currently on screen
+    // A CFI for the top location currently on screen.
+    // This is intended to be useful for bookmarking.
     currentCFI: function() {
         var range = BookKit.Utils.rangeForCurrentColumn();
         var contentDocumentCFI = BookKit.CFI.contentCFIForRange(range);
@@ -45,8 +53,9 @@ _.extend(BookKit.CFI, {
         return new BookKit.CFI({cfi: cfiString}).parseAndResolve();
     },
 
+    // A CFI for the current window's selection. 
+    // This is intended to be useful for annotating.
     selectionCFI: function() {
-        // A CFI for the top location currently on screen
         var contentDocumentCFI = BookKit.CFI.contentCFIForRange(window.getSelection().getRangeAt(0));
         var cfiString = "epubcfi(" + BookKit.Config.Document.cfi + contentDocumentCFI + ")";
         return new BookKit.CFI({cfi: cfiString}).parseAndResolve();
@@ -54,6 +63,9 @@ _.extend(BookKit.CFI, {
 
     // Semi-private utility methods for generating CFI strings. These DO
     // NOT return BookKit.CFI obejcts.
+    
+    // Return the content document portion of a CFI for the given range.
+    // It will not include the package location, etc.
     contentCFIForRange: function(range) {
         var startSteps = BookKit.CFI.cfiStepsForNode(range.startContainer);
         var endSteps = BookKit.CFI.cfiStepsForNode(range.endContainer);
@@ -88,6 +100,8 @@ _.extend(BookKit.CFI, {
         return contentDocumentCFI;
     },
 
+    // Return an array of CFI 'steps'—the node indicies within their
+    // parent's children for the given node and its parents.
     cfiStepsForNode: function(node) {
         var steps = [];
         while(node) { 
@@ -121,6 +135,11 @@ _.extend(BookKit.CFI, {
         return steps.reverse();
     }
 });
+
+// Instance Methods
+// ----------------
+// These methods are intended for the parsing and resolution of CFI
+// strings.
 _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
     defaults: {
         // The CFI string
@@ -147,12 +166,17 @@ _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
     initialize: function() {
     },
 
+    // This is the primary method called for parsing this object's CFI
+    // string and resolving it within the content document.
     parseAndResolve: function() {
         this.parse();
         this.resolve();
         return this;
     },
 
+    // Genreate a CSS-safe string corrosponding to the CFI. Intended to
+    // be useful in the event that elements are added to the DOM to
+    // represent annotations that corrospond to CFIs.
     safeAttr: function() {
         // Convert this:
         //    epubcfi(/6/12!/4/2[episode-01]/68/1:2)
@@ -164,9 +188,9 @@ _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
         return epubcfi.replace(/[\:\/\,]/g, '_').replace(/[\!\(\)\[\]]/g, '');
     },
     
-    /****
-     * Parsing CFIs to node indexes
-     ****/
+    // ### Parsing CFIs to node indexes
+    // These functions are semi-private and not intended to be called
+    // directly.
 
     // Parse the CFI into a list of steps.
     parse: function() {
@@ -176,6 +200,7 @@ _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
         if (BookKit._parsed_cfis[cfi] != null)
             return BookKit._parsed_cfis[cfi].get("steps");
 
+        // XXX: Throw up some kind of error
         if (cfi.indexOf("epubcfi(") != 0)
             return;
 
@@ -248,6 +273,10 @@ _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
         return components;
     },
 
+    // Parse each step string in the given array and return an array of
+    // matching step objects which include the node index the step
+    // refers to and any additional information, such as offsets that
+    // are present in the step string.
     parseSteps: function(stepStrings) {
         var steps = [];
 
@@ -284,10 +313,11 @@ _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
         return steps;
     },
 
-    /****
-     * Resolving CFIs
-     ****/
+    // ### Resolving CFIs
+    // These functions are semi-private and not intended to be called
+    // directly.
 
+    // Resolve this CFI once it has been parsed
     resolve: function() {
         if (this.ranges)
             return this.ranges;
@@ -395,6 +425,8 @@ _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
         return this.ranges;
     },
 
+    // Resolve a specific step, represented by the step object, within
+    // the given parent node
     resolveStep: function(stepDict, parentNode) {
         var nodeIndex = -1;
         var node = null;
