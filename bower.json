@@ -2,7 +2,9 @@
   "name": "bookkit",
   "dependencies": {
     "jquery": "~2.1.0",
-    "underscore": ""
+    "underscore": "~1.6.0",
+    "font-awesome": "~4.0.3",
+    "fontloader": "~0.1.4"
   },
   "version": "0.1",
   "authors": [
@@ -19,4 +21,3 @@
     "docs"
   ]
 }
-

@@ -33,41 +33,28 @@
 // The Annotation model corrosponds to notes, bookmarks, and higlights
 // which are subsequently drawn (if done so using BookKit) using an
 // AnnotationCanvas. 
-//
-// Annotation Types:
-//    BKAnnotationTypeBookmark
-//    BKAnnotationTypeHighlight
-//    BKAnnotationTypeNote
-//
-// Annotation Styles (not valid for all types):
-//    BKAnnotationStyleIcon (Bookmark and Note types)
-//    BKAnnotationStyleHighlight (Highlight type)
-//    BKAnnotationStyleUnderline (Highlight type)
-//    BKAnnotationStyleInline (Note type)
-//
-// Annotaton Colors (different effects per type, nothing for bookmarks)
-//    BKAnnotationColorYellow
-//    BKAnnotationColorPink
-//    BKAnnotationColorRed
-//    BKAnnotationColorPurple
-//    BKAnnotationColorBlue
-//    BKAnnotationColorGreen
-//    BKAnnotationColorBlack (Underline & Note only)
 var Annotation = BookKit.Annotation = function(attributes) {
     BookKit.BaseClass.apply(this, arguments);
 };
 _.extend(BookKit.Annotation.prototype, BookKit.BaseClass.prototype, {
     defaults: {
         cfi: null,
-        type: BookKit.Constants.BKAnnotationTypeHighlight,
-        style: BookKit.Constants.BKAnnotationStyleHighlight,
-        color: BookKit.Constants.BKAnnotationColorYellow,
-        note: ""
+        bookmark: false,
+        bookmarkStyle: BookKit.Constants.BKAnnotationStyleNone,
+        bookmarkColor: BookKit.Constants.BKAnnotationColorNone,
+
+        highlight: false,
+        highlightStyle: BookKit.Constants.BKAnnotationStyleNone,
+        highlightColor: BookKit.Constants.BKAnnotationColorNone,
+
+        note: false,
+        noteStyle: BookKit.Constants.BKAnnotationStyleNone,
+        noteColor: BookKit.Constants.BKAnnotationColorNone,
+        noteText: "",
     },
 
     cfi: undefined,
-    noteCanvas: undefined,
-    annotationCanvas: undefined,
+    rects: [],
 
     initialize : function() {
         var cfi = this.get('cfi');
@@ -84,7 +71,6 @@ _.extend(BookKit.Annotation.prototype, BookKit.BaseClass.prototype, {
         var rects = [];
         _.each(cfi.ranges, function(range, index, ranges) {
             _.each(range.getClientRects(), function(rect, index, rects) {
-                console.log(rect);
                 rects.push(rect);
             }, this);
         }, this);
@@ -104,6 +90,10 @@ var AnnotationCanvas = BookKit.AnnotationCanvas = function(attributes) {
 _.extend(BookKit.AnnotationCanvas.prototype, BookKit.BaseClass.prototype, {
     annotations: {},
     canvas: undefined,
+
+    // Mouse event handling
+    mouseIsDown: false,
+    mousePosition: {},
     
     initialize: function() {
         var canvas = document.createElement("canvas");
@@ -120,6 +110,32 @@ _.extend(BookKit.AnnotationCanvas.prototype, BookKit.BaseClass.prototype, {
         this.canvas = canvas;
         this.el = annotationsContainer;
         this.refresh();
+
+        // Because the canvas is the background of the window, we need
+        // to check for window events, rather than canvas events.
+        $(window).on('mousedown', function(e) {
+            console.log("mouse is down", e);
+        });
+        $(window).on('mouseup',  {
+            annotations: this.annotations
+        }, function(e) {
+            // See if the event happened in one of our annotation rects.
+            var x = e.pageX;
+            var y = e.pageY;
+            var annotations = e.data.annotations;
+            _.each(annotations, function(annotation, index, annotations) {
+                _.each(annotation.rects, function(rect, index, rects) {
+                    if (x >= rect.left && x <= rect.left + rect.width &&
+                        y >= rect.top && y <= rect.top + rect.height) {
+                        // This annotation has been clicked!
+                        $.event.trigger({
+                            type: "annotationClick",
+                            annotation: annotation
+                        });
+                    }
+                }, this);
+            }, this);
+        });
     },
 
     // Redraw the entire annotation canvas.
@@ -130,245 +146,171 @@ _.extend(BookKit.AnnotationCanvas.prototype, BookKit.BaseClass.prototype, {
     // Add an annotation to the annotation canvas for a CFI of the given 
     // type with the given style and color.
     // Example:
-    //    annotationCanvas.addAnnotation("epubcfi(/6/12!/4/2/2,/1:0,/1:28)",
-    //        BookKit.Constants.BKAnnotationTypeHighlight,
-    //        BookKit.Constants.BKAnnotationStyleHighlight,
-    //        BookKit.Constants.BKAnnotationColorRed);
-    addAnnotation: function() {
-        var annotationOrCFI = arguments[0];
+    //    annotationCanvas.addAnnotation(
+    //        "epubcfi(/6/12!/4/2/10,/1:530,/1:533)",
+    //        {
+    //            highlight: true,
+    //            highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
+    //            highlightColor: BookKit.Constants.BKAnnotationColorRed
+    //        });
+    addAnnotation: function(cfiOrString, annotationProps) {
         var annotaiton = undefined;
         var cfi = undefined;
 
-        if ((typeof annotationOrCFI == 'string') || 
-            (annotationOrCFI instanceof String) || 
-            (annotationOrCFI instanceof BookKit.CFI)) {
-            // We were given a string. Parse it.
-            var type = arguments[1]
-            var style = arguments[2]
-            var color = arguments[3]
-            var note = arguments[4]
+        // We were given a string. Parse it.
+        if ((typeof cfiOrString == 'string') || (cfiOrString instanceof String))
+            cfi = new BookKit.CFI({cfi: cfiOrString}).parseAndResolve();
+        else
+            cfi = cfiOrString;
 
-            if ((typeof annotationOrCFI == 'string') || (annotationOrCFI instanceof String))
-                cfi = new BookKit.CFI({cfi: annotationOrCFI}).parseAndResolve();
-            else
-                cfi = annotationOrCFI;
+        annotationProps.cfi = cfi;
+        annotation = new BookKit.Annotation(annotationProps);
 
-            annotation = new BookKit.Annotation({
-                cfi: cfi, type: type, style: style, color: color, note: note});
-        } else {
-            cfi = annotation.get("cfi");
-        }
-
-        // console.log("annotation", annotation, cfi.get("cfi"));
-
-        this.annotations[cfi] = { annotation: annotation, rects: [] };
-        this.apply(annotation);
+        this.annotations[cfi.get("cfi")] = annotation;
+        this.render(annotation);
         this.refresh();
-        console.log("Done drawing", cfi.get("cfi"));
     },
 
     // Remove an annotation from the canvas.
-    removeAnnotation: function(annotation) {
-        var annotationOrCFI = arguments[0];
+    removeAnnotation: function(annotationOrCFI) {
         var annotaiton = undefined;
         var cfi = undefined;
 
         if ((typeof annotationOrCFI == 'string') || 
             (annotationOrCFI instanceof String) || 
             (annotationOrCFI instanceof BookKit.CFI)) {
-            // We were given a string. Parse it.
-            var type = arguments[1]
-            var style = arguments[2]
-            var color = arguments[3]
-            var note = arguments[4]
 
             if ((typeof annotationOrCFI == 'string') || (annotationOrCFI instanceof String))
                 cfi = new BookKit.CFI({cfi: annotationOrCFI}).parseAndResolve();
             else
                 cfi = annotationOrCFI;
 
-            annotation = new BookKit.Annotation({
-                cfi: cfi, type: type, style: style, color: color, note: note});
         } else {
             cfi = annotation.get("cfi");
         }
-        
+
+        var annotation = this.annotations[cfi.get("cfi")];
         this.remove(annotation);
 
-        var index = this.annotations.indexOf(cfi);
+        var index = this.annotations.indexOf(cfi.get("cfi"));
         this.annotations.splice(index, 1);
     },
 
-    apply: function(annotation) {
-        var type = annotation.get("type");
-        if (type == BookKit.Constants.BKAnnotationTypeBookmark)
-            this.applyBookmark(annotation);
+    render: function(annotation) {
+        this.annotations[annotation.get("cfi").get("cfi")].rects = [];
 
-        if (type == BookKit.Constants.BKAnnotationTypeHighlight)
-            this.applyHighlight(annotation);
+        if (annotation.get("bookmark"))
+            this.renderBookmark(annotation);
 
-        if (type == BookKit.Constants.BKAnnotationTypeNote)
-            this.applyNote(annotation);
+        if (annotation.get("highlight"))
+            this.renderHighlight(annotation);
 
+        if (annotation.get("note"))
+            this.renderNote(annotation);
     },
 
     remove: function(annotation) {
-        var type = annotation.get("type");
-        if (type == BookKit.Constants.BKAnnotationTypeBookmark)
-            this.removeBookmark(annotation);
-
-        if (type == BookKit.Constants.BKAnnotationTypeHighlight)
-            this.removeHighlight(annotation);
-
-        if (type == BookKit.Constants.BKAnnotationTypeNote)
-            this.removeNote(annotation);
+        // It doesn't matter whether we're removing a bookmark, note, or
+        // highlight. We need to clear the canvas rects for all types.
+        var rects = this.annotations[cfi.get("cfi")].rects;
+        var canvas_context = this.canvas.getContext('2d');
+        _.each(rects, function(rect, index, rects) {
+            canvas_context.clearRect(rect.left, rect.top, rect.width, rect.height);
+        });
+        this.annotations[cfi.get("cfi")].rects = [];
     },
 
-    applyHighlight: function(annotation) {
+    renderHighlight: function(annotation) {
         var cfi = annotation.get("cfi");
-        var style = annotation.get("style");
-        var color = annotation.get("color");
-
-        var highlightRects = [];
-
+        var style = annotation.get("highlightStyle");
+        var color = annotation.get("highlightColor");
         var canvas_context = this.canvas.getContext('2d');
 
         _.each(cfi.ranges, function(range, index, ranges) {
-            // console.log("highlight range", range.startContainer, range.endContainer);
             _.each(range.getClientRects(), function(rect, index, rects) {
-                // console.log(rect, index, rects);
                 if (style == BookKit.Constants.BKAnnotationStyleHighlight) {
                     canvas_context.fillStyle = BookKit.Config.Colors.Highlight[color];
-                    canvas_context.fillRect(rect.left, rect.top, rect.width, rect.height);
                 }
                 if (style == BookKit.Constants.BKAnnotationStyleUnderline) {
                     var top = rect.top + rect.height - BookKit.Config.Annotations.underlineThickness;
                     canvas_context.fillStyle = BookKit.Config.Colors.Underline[color];
-                    canvas_context.fillRect(rect.left, top, 
-                        rect.width, BookKit.Config.Annotations.underlineThickness);
+                    rect.top = top;
+                    rect.height = BookKit.Config.Annotations.underlineThickness;
                 }
+
+                // Fill the rect.
+                canvas_context.fillRect(rect.left, rect.top, rect.width, rect.height);
+                this.annotations[cfi.get("cfi")].rects.push(rect);
             }, this);
         }, this);
-
-        this.annotations[cfi].rects = highlightRects;
     },
 
-    removeHighlight: function(annotation) {
+    renderBookmark: function(annotation) {
         var cfi = annotation.get("cfi");
-        var highlightRects = this.annotations[cfi].rects;
-
-        var canvas_context = this.canvas.getContext('2d');
-        _.each(cfi.ranges, function(range, index, ranges) {
-            // console.log("highlight range", range.startContainer, range.endContainer);
-            _.each(range.getClientRects(), function(rect, index, rects) {
-                if (style == BookKit.Constants.BKAnnotationStyleHighlight) {
-                    canvas_context.clearRect(rect.left, rect.top, rect.width, rect.height);
-                }
-                if (style == BookKit.Constants.BKAnnotationStyleUnderline) {
-                    var top = rect.top + rect.height - BookKit.Config.Annotations.underlineThickness;
-                    canvas_context.clearRect(rect.left, top, 
-                        rect.width, BookKit.Config.Annotations.underlineThickness);
-                }
-            });
-        });
-
-        this.annotations[cfi].rects = [];
-    },
-
-    applyBookmark: function(annotation) {
-        var cfi = annotation.get("cfi");
-        var style = annotation.get("style");
-        // console.log("applying bookmark");
+        var style = annotation.get("bookmarkStyle");
+        var color = annotation.get("bookmarkColor");
 
         if (style == BookKit.Constants.BKAnnotationStyleIcon) {
             // If we're to show the bookmark, add some content to the
             // anchor and style and position it appropriately. 
             var canvas_context = this.canvas.getContext('2d');
             var columnWidth = $(window).innerWidth();
-            var rect = cfi.ranges[0].getClientRects()[0];
-            var columnNumber = BookKit.Utils.columnNumberForPosition(rect.left);
+            var originalRect = cfi.ranges[0].getClientRects()[0];
+            var columnNumber = BookKit.Utils.columnNumberForPosition(originalRect.left);
             var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
-            var top = rect.top; // + BookKit.Config.Annotations.padding;
+            var rect = {
+                left: left, 
+                top: originalRect.top, 
+                right: left + originalRect.height,
+                width: originalRect.height, 
+                height: originalRect.height
+            };
 
+            // canvas_context.fillStyle = BookKit.Config.Colors.Highlight[color];
             canvas_context.fillStyle = "#000000";
             canvas_context.textAlign = 'left';
-            canvas_context.fillText("B", left, top);
+            canvas_context.textBaseline = 'top';
+            canvas_context.font = originalRect.height + "px FontAwesome";
+            canvas_context.fillText("\uf02e", rect.left, rect.top);
+
+            this.annotations[cfi.get("cfi")].rects.push(rect);
         }
     },
 
-    removeBookmark: function(annotation) {
-
-    },
-
-    // Where highlights make sense on the canvas, notes do not. There's
-    // no reason to reinvent what the browser is already designed to do:
-    // display text, structured with HTML and styled with CSS. On a
-    // canvas, we'd have to style it, position it, account for text
-    // wrapping and all sorts of other stuff we get for free with HTML.
-    // So, in this case, the "Canvas" part of "AnnotationCanvas" is a
-    // bit of a lie.
-    applyNote: function(annotation) {
+    renderNote: function(annotation) {
         var cfi = annotation.get("cfi");
-        var note = annotation.get("note");
-        var style = annotation.get("style");
-        var color = annotation.get("color");
-
-        console.log("note cfi", cfi.get("cfi"));
-
-        if (style == BookKit.Constants.BKAnnotationStyleInline) {
-            // Insert the note inline into the HTML at the end of the
-            // CFI
-            var range = _.last(cfi.ranges);
-            range.collapse(false);
-
-            // var newRange = document.createRange();
-            // newRange.setStart(lastRange.endContainer, lastRange.endOffset);
-            // newRange.setEnd(lastRange.endContainer, lastRange.endOffset);
-            // console.log("new range", newRange);
-
-            console.log("range", range);
-
-            var noteElement = document.createElement("div");
-            $(noteElement).attr('class', '-BookKit-Annotations');
-            $(noteElement).attr('id', '-BookKit-Annotations-' + 
-                BookKit.Utils.makeSafeForCSS(cfi.get('cfi')))
-            $(noteElement).css('font-family', BookKit.Config.Annotations.noteFont);
-
-            // Disable selection of the note element
-            $(noteElement).attr('unselectable','on')
-                .css({'-moz-user-select':'-moz-none',
-                      '-moz-user-select':'none',
-                      '-o-user-select':'none',
-                      '-khtml-user-select':'none',
-                      '-webkit-user-select':'none',
-                      '-ms-user-select':'none',
-                      'user-select':'none'})
-                .bind('selectstart', function() { return false; })
-                .bind('mouseup', function() { return false; });
-
-            $(noteElement).html(note);
-            range.insertNode(noteElement);
-        } 
+        var note = annotation.get("noteText");
+        var style = annotation.get("noteStyle");
+        var color = annotation.get("noteColor");
 
         if (style == BookKit.Constants.BKAnnotationStyleIcon) {
+            // If the annotation spans more than one character, apply it
+            // as a highlight as well.
+            
             var canvas_context = this.canvas.getContext('2d');
             var columnWidth = $(window).innerWidth();
-            var rect = cfi.ranges[0].getClientRects()[0];
-            var columnNumber = BookKit.Utils.columnNumberForPosition(rect.left);
+            var originalRect = cfi.ranges[0].getClientRects()[0];
+            var columnNumber = BookKit.Utils.columnNumberForPosition(originalRect.left);
             var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
-            var top = rect.top; // + BookKit.Config.Annotations.padding;
+            var rect = {
+                left: left, 
+                top: originalRect.top, 
+                right: left + originalRect.height,
+                width: originalRect.height, 
+                height: originalRect.height
+            };
 
             canvas_context.fillStyle = BookKit.Config.Colors.Highlight[color];
             canvas_context.textAlign = 'left';
-            canvas_context.fillText("N", left, top);
+            canvas_context.textBaseline = 'top';
+            canvas_context.font = rect.height + "px FontAwesome";
+            canvas_context.fillText("\uF075", rect.left, rect.top);
+
+            this.annotations[cfi.get("cfi")].rects.push(rect);
         }
 
     },
 
-    removeNote: function(annotation) {
-
-    }
-   
 });
 
 

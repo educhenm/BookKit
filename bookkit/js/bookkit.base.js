@@ -37,10 +37,7 @@ BookKit = {
 
 
 BookKit.Constants = {
-    // Annotation Types. These should be self-explanatory
-    BKAnnotationTypeBookmark: 0,
-    BKAnnotationTypeHighlight: 1,
-    BKAnnotationTypeNote: 2,
+    BKAnnotationNone: false,
 
     // Annotation styles. Not all of these apply to all annotation
     // types. 
