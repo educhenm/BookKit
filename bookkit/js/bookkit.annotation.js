@@ -101,41 +101,9 @@ _.extend(BookKit.AnnotationCanvas.prototype, BookKit.BaseClass.prototype, {
         $(canvas).attr('width', $(window).innerWidth());
         $(canvas).attr('height', $(window).innerHeight());
         $(canvas).css('position', 'fixed');
-        $(canvas).appendTo('--BookKit-Annotations');
-
-        var annotationsContainer = document.createElement("div");
-        $(annotationsContainer).attr('id', '-BookKit-Annotations');
-        $(annotationsContainer).appendTo('body');
 
         this.canvas = canvas;
-        this.el = annotationsContainer;
         this.refresh();
-
-        // Because the canvas is the background of the window, we need
-        // to check for window events, rather than canvas events.
-        $(window).on('mousedown', function(e) {
-            console.log("mouse is down", e);
-        });
-        $(window).on('mouseup',  {
-            annotations: this.annotations
-        }, function(e) {
-            // See if the event happened in one of our annotation rects.
-            var x = e.pageX;
-            var y = e.pageY;
-            var annotations = e.data.annotations;
-            _.each(annotations, function(annotation, index, annotations) {
-                _.each(annotation.rects, function(rect, index, rects) {
-                    if (x >= rect.left && x <= rect.left + rect.width &&
-                        y >= rect.top && y <= rect.top + rect.height) {
-                        // This annotation has been clicked!
-                        $.event.trigger({
-                            type: "annotationClick",
-                            annotation: annotation
-                        });
-                    }
-                }, this);
-            }, this);
-        });
     },
 
     // Redraw the entire annotation canvas.
