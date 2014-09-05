@@ -138,6 +138,7 @@ BookKit.Utils.getSafeRanges = function(dangerous) {
 };
 
 // Make a given string "safe" as a CSS identifier or class name.
+// http://stackoverflow.com/questions/7627000/javascript-convert-string-to-safe-class-name-for-css
 BookKit.Utils.makeSafeForCSS = function(name) {
     return name.replace(/[^a-z0-9]/g, function(s) {
         var c = s.charCodeAt(0);
