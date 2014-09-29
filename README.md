@@ -16,6 +16,9 @@ BookKit is BSD licensed. The third-party libraries and fonts included have their
 Using
 -----
 
+BookKit is not meant to be used at the moment. But if you want to,
+here's basically how you would go about it:
+
 Once an ePub file is decompressed and one of its HTML files opened, the
 following needs to be injected into the header (paths should be adjusted
 as necessary):
