@@ -58,12 +58,19 @@ BookKit.Constants = {
 };
 
 BookKit.Config = {
+    // For CFI purposes, this particular XHTML file needs a document
+    // identifier.
     Document: {
         cfi: "",
     },
+
+    // Have our CGI generation ignore all elements with the given
+    // selectors.
     CFI: {
         ignore: '.-BookKit-Annotation',
     },
+
+    // Annotation properties
     Annotations: {
         totalMargin: 200,
         padding: 100,
@@ -74,6 +81,8 @@ BookKit.Config = {
         noteFontSize: 14,
         notePadding: 25,
     },
+
+    // Colors used for annotations
     Colors: {
         Highlight: [
             'transparent', // BKAnnotationColorNone
@@ -108,3 +117,5 @@ BookKit.Config = {
     }
 };
 
+// A list of annotation objects associated with this particular XHTML document
+BookKit.Annotations = [];

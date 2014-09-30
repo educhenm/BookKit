@@ -32,6 +32,34 @@
 // =============
 // Utility and convenience functions for BookKit. 
 
+// Total number of columns
+// http://stackoverflow.com/questions/10276359/get-number-of-columns-created-by-css-column-width
+BookKit.Utils.totalColumns = function() {
+    var $el = $('body');
+    var width = $el[0].scrollWidth;
+
+    var columnWidth;
+    var columnGap;
+    var paddingLeft = parseInt($el.css('padding-left'), 10);
+    var paddingRight = parseInt($el.css('padding-right'), 10);
+    $.each(['-webkit-','-moz-',''], function(i, prefix) {
+        var _width = parseInt($el.css(prefix+'column-width'), 10);
+        var _gap =   parseInt($el.css(prefix+'column-gap'), 10);
+        if (!isNaN(_width))
+            columnWidth = _width;
+        if (!isNaN(_gap))
+            columnGap = _gap;
+    });
+
+    console.log(width - paddingLeft - paddingRight);
+    console.log(columnWidth + columnGap);
+    var columnsNumber = Math.floor((width - paddingLeft - paddingRight)/(columnWidth + columnGap) );
+    if (isNaN(columnsNumber) || columnsNumber < 1) 
+        columnsNumber = 1;
+
+    return columnsNumber;
+}
+
 BookKit.Utils.columnNumberForPosition = function(left) {
     var columnWidth = $(window).innerWidth();
     var columnNumber = parseInt(left / columnWidth);
@@ -51,6 +79,7 @@ BookKit.Utils.rangeForCurrentColumn = function() {
     var range = document.caretRangeFromPoint(columnNumber, 0);
     return range;
 };
+
 
 // Take a given selection range that may span DOM elements and return 
 // an array of equivelent ranges that do not.

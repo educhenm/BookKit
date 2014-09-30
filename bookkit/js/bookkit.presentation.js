@@ -28,22 +28,253 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
+
 // BookKit Presentation
 // ====================
-// This is the (completely optional) presentation layer of BookKit. It
-// takes care to arrange the content of given document in a pleasing way
-// for reading, and handle navigation within that document.
-//
-// Presentation also handles the UI for adding/editing/removing
-// annotations.
-
 var Presentation = BookKit.Presentation = function(attributes) {
     BookKit.BaseClass.apply(this, arguments);
 };
-_.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
 
-    annotationCanvas: new AnnotationCanvas(),
+// BookKit Pagination Presentation
+// ===========================
+// Set up a "page" using columns. Goes along with
+// BookKit.Behavior.Navigation for navigating the columns.
+var Paginate = BookKit.Presentation.Paginate = function(attributes) {
+    BookKit.BaseClass.apply(this, arguments);
+};
+_.extend(BookKit.Presentation.Paginate.prototype, BookKit.BaseClass.prototype, {
+    defaults: {
+        verticalPadding: 100,
+        horizontalPadding: 200,
+    },
+    
+    presentation: undefined,
+
+    initialize: function(presentation) {
+        this.presentation = presentation;
+
+        // CSS adjustments that are relevent to pagination
+        // $('body').css('overflow', 'hidden');
+        $('body').css('margin', 0);
+        $('body').css('padding', 
+            this.get('verticalPadding') + 'px ' + 
+            this.get('horizontalPadding') + 'px');
+        $('body').css('-webkit-column-gap', 
+            (this.get('horizontalPadding') * 2) +'px');
+        $('body').css('height', 
+            $(window).innerHeight() - (this.get('verticalPadding') * 2) + 'px');
+        $('body').css('-webkit-column-width', 
+            $(window).innerWidth() - this.get('horizontalPadding') + 'px');
+
+    },
+
+});
+
+
+// Annotation Canvas
+// -----------------
+// The annotation canvas handles the drawing of annotations. Highlights
+// are actually drawn on an HTML5 canvas element (rather than inline in
+// the HTML, potentially complicating our resolution of new CFIs).
+var Annotate = BookKit.Presentation.Annotate = function(attributes) {
+    BookKit.BaseClass.apply(this, arguments);
+};
+_.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
+    defaults: {
+        width: null,
+        height: null,
+    },
+
+    canvas: undefined,
+
+    // Mouse event handling
+    mouseIsDown: false,
+    mousePosition: {},
+
+    presentation: undefined,
+    
+    initialize: function(presentation) {
+        this.set('width', $('body')[0].scrollWidth);
+        this.set('height', $('body')[0].scrollHeight);
+
+        var canvas = document.createElement("canvas");
+        $(canvas).attr('id', '-BookKit-Annotation-Canvas');
+        $(canvas).attr('width', this.get('width'));
+        $(canvas).attr('height', this.get('height'));
+        $(canvas).css('position', 'fixed');
+
+        // This is webkit only.
+        $('body').css('background', '-webkit-canvas(-BookKit-Annotation-Canvas) no-repeat');
+
+        this.canvas = canvas;
+        this.refresh();
+
+        $(document).on('addedAnnotation', function(e, annotation) {
+            this.render(annotation);
+            this.refresh();
+        }.bind(this));
+
+        $(document).on('removedAnnotation', function(e, annotation) {
+            this.remove(annotation);
+        }.bind(this));
+
+    },
+
+    canvasContext: function() {
+        var canvas_context = document.getCSSCanvasContext('2d', '-BookKit-Annotation-Canvas', this.get('width'), this.get('height'));
+        return canvas_context;
+    },
+
+    // Redraw the entire annotation canvas.
+    refresh: function() {
+        // $('body').css({'background-image':"url(" + this.canvas.toDataURL("image/png")+ ")" });
+    },
+
+    render: function(annotation) {
+        BookKit.Annotations[annotation.get("cfi").get("cfi")].rects = [];
+
+        if (annotation.get("bookmark"))
+            this.renderBookmark(annotation);
+
+        if (annotation.get("highlight"))
+            this.renderHighlight(annotation);
+
+        if (annotation.get("note"))
+            this.renderNote(annotation);
+    },
+
+    remove: function(annotation) {
+        // It doesn't matter whether we're removing a bookmark, note, or
+        // highlight. We need to clear the canvas rects for all types.
+        var rects = BookKit.Annotations[cfi.get("cfi")].rects;
+        // var canvas_context = this.canvas.getContext('2d');
+        var canvas_context = this.canvasContext();
+
+        _.each(rects, function(rect, index, rects) {
+            canvas_context.clearRect(rect.left, rect.top, rect.width, rect.height);
+        });
+        BookKit.Annotations[cfi.get("cfi")].rects = [];
+    },
+
+    renderHighlight: function(annotation) {
+        var cfi = annotation.get("cfi");
+        var style = annotation.get("highlightStyle");
+        var color = annotation.get("highlightColor");
+        // var canvas_context = this.canvas.getContext('2d');
+        var canvas_context = this.canvasContext();
+
+        _.each(cfi.ranges, function(range, index, ranges) {
+            _.each(range.getClientRects(), function(rect, index, rects) {
+                if (style == BookKit.Constants.BKAnnotationStyleHighlight) {
+                    canvas_context.fillStyle = BookKit.Config.Colors.Highlight[color];
+                }
+                if (style == BookKit.Constants.BKAnnotationStyleUnderline) {
+                    var top = rect.top + rect.height - BookKit.Config.Annotations.underlineThickness;
+                    canvas_context.fillStyle = BookKit.Config.Colors.Underline[color];
+                    rect.top = top;
+                    rect.height = BookKit.Config.Annotations.underlineThickness;
+                }
+
+                // Fill the rect.
+                var left_offset = $('body')[0].scrollLeft;
+                var top_offset = $('body')[0].scrollTop;
+                canvas_context.fillRect(rect.left + left_offset, rect.top + top_offset, 
+                    rect.width, rect.height);
+                BookKit.Annotations[cfi.get("cfi")].rects.push(rect);
+            }, this);
+        }, this);
+    },
+
+    renderBookmark: function(annotation) {
+        var cfi = annotation.get("cfi");
+        var style = annotation.get("bookmarkStyle");
+        var color = annotation.get("bookmarkColor");
+
+        if (style == BookKit.Constants.BKAnnotationStyleIcon) {
+            // If we're to show the bookmark, add some content to the
+            // anchor and style and position it appropriately. 
+            // var canvas_context = this.canvas.getContext('2d');
+            var canvas_context = this.canvasContext();
+            var columnWidth = $(window).innerWidth();
+            var originalRect = cfi.ranges[0].getClientRects()[0];
+            var columnNumber = BookKit.Utils.columnNumberForPosition(originalRect.left);
+            var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
+            var rect = {
+                left: left, 
+                top: originalRect.top, 
+                right: left + originalRect.height,
+                width: originalRect.height, 
+                height: originalRect.height
+            };
+
+            // canvas_context.fillStyle = BookKit.Config.Colors.Highlight[color];
+            canvas_context.fillStyle = "#000000";
+            canvas_context.textAlign = 'left';
+            canvas_context.textBaseline = 'top';
+            canvas_context.font = originalRect.height + "px FontAwesome";
+            canvas_context.fillText("\uf02e", rect.left, rect.top);
+
+            BookKit.Annotations[cfi.get("cfi")].rects.push(rect);
+        }
+    },
+
+    renderNote: function(annotation) {
+        var cfi = annotation.get("cfi");
+        var note = annotation.get("noteText");
+        var style = annotation.get("noteStyle");
+        var color = annotation.get("noteColor");
+
+        if (style == BookKit.Constants.BKAnnotationStyleIcon) {
+            // If the annotation spans more than one character, apply it
+            // as a highlight as well.
+            
+            // var canvas_context = this.canvas.getContext('2d');
+            var canvas_context = this.canvasContext();
+            var columnWidth = $(window).innerWidth();
+            var originalRect = cfi.ranges[0].getClientRects()[0];
+            var columnNumber = BookKit.Utils.columnNumberForPosition(originalRect.left);
+            var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
+            var rect = {
+                left: left, 
+                top: originalRect.top, 
+                right: left + originalRect.height,
+                width: originalRect.height, 
+                height: originalRect.height
+            };
+
+            canvas_context.fillStyle = BookKit.Config.Colors.Highlight[color];
+            canvas_context.textAlign = 'left';
+            canvas_context.textBaseline = 'top';
+            canvas_context.font = rect.height + "px FontAwesome";
+            canvas_context.fillText("\uF075", rect.left, rect.top);
+
+            BookKit.Annotations[cfi.get("cfi")].rects.push(rect);
+        }
+
+    },
+
+});
+
+
+// BookKit Presentation
+// ====================
+_.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
+    defaults: {
+        behaviors: {
+            navigation: BookKit.Behaviors.Navigate,
+            highlights: BookKit.Behaviors.HighlightImmediately,
+        },
+        presentations: {
+            pagination: BookKit.Presentation.Paginate,
+            annotation: BookKit.Presentation.Annotate,
+        }
+    },
+
+    // annotationCanvas: new AnnotationCanvas(),
     presentationContainer: undefined,
+
+    behaviors: {},
+    presentations: {},
 
     initialize: function() {
         // Use the font loader for FontAwesome, which we use for
@@ -58,85 +289,16 @@ _.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
         $(this.presentationContainer).attr('id', '-BookKit-Presentation');
         $(this.presentationContainer).appendTo('body');
 
-        // Listen for tap events on our annotations.
-        // Because the canvas is the background of the window, we need
-        // to check for window events, rather than canvas events.
-        $('html').on('tap', {
-              annotations: this.annotationCanvas.annotations,
-              success: this.annotationTap,
-              failure: this.nonAnnotationTap 
-          }, function(e, data) {
-            // See if the event happened in one of our annotation rects.
-            var x = data.x;
-            var y = data.y;
-            var annotationTap = false;
+        _.each(this.get('presentations'), function(value, key) {
+            this.presentations[key] = new value(this);
+        }.bind(this));
+        
+        _.each(this.get('behaviors'), function(value, key) {
+            this.behaviors[key] = new value(this);
+        }.bind(this));
 
-            var annotations = e.data.annotations;
-            _.each(annotations, function(annotation, index, annotations) {
-                _.each(annotation.rects, function(rect, index, rects) {
-                    if (x >= rect.left && x <= rect.left + rect.width &&
-                        y >= rect.top && y <= rect.top + rect.height) {
-                        annotationTap = true;
-                        e.data.success(annotation, rect);
-                    }
-                }, this);
-            }, this);
-
-            if (!annotationTap)
-                e.data.failure(e, data);
-            
-        });
-
-    },
-
-    annotationTap: function(annotation, rect) {
-        // Clear any previous presentations.
-        $('#-BookKit-Presentation').html('');
-
-        console.log("annotation tap event", annotation);
-
-        // Construct a menu controller for this annotation
-        var menuController = $("\
-            <div class='-BookKit-Presentation-MenuController'>\
-                <ul class='-BookKit-Presentation-MenuController-Menu'>\
-                    <li>Option</li>\
-                    <li>Option</li>\
-                    <li>Option</li>\
-                </ul>\
-            </div>\
-        ");
-
-        /*
-        html2canvas($("body"), { 
-            onrendered: function(canvas) {
-                $(menuController).css({'background-image':"url(" + canvas.toDataURL("image/png")+ ")" });
-            }
-        });
-        */
-
-        // Calculate the position of the menu controller
-        var width = $(menuController).measure(function() { return this.width() });
-        var height = $(menuController).measure(function() { return this.height() });
-        var middle = (rect.width / 2);
-        var top = rect.top - (rect.height / 4) - height;
-        $(menuController).css('left', rect.left);
-        $(menuController).css('top', top);
-        $('#-BookKit-Presentation').append(menuController);
-    },
-
-    nonAnnotationTap: function(event, data) {
-        // Do nothing except clear the presentation layer.
-        console.log("non-annotation tap");
-        $('#-BookKit-Presentation').html('');
     },
 
 });
 
-
-var AnnotationPresentation = BookKit.AnnotationPresentation = function(attributes) {
-    BookKit.BaseClass.apply(this, arguments);
-};
-_.extend(BookKit.AnnotationPresentation.prototype, BookKit.BaseClass.prototype, {
-
-});
 
