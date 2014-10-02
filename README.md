@@ -66,5 +66,7 @@ JavaScript:
       });
 
 
+At the moment BookKit's AnnotationCanvas presentation layer is
+WebKit-only.
 
     

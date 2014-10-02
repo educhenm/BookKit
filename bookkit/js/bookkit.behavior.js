@@ -39,66 +39,73 @@ var Navigate = BookKit.Behaviors.Navigate = function(attributes) {
 };
 _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
     defaults: {
-        page: 5,
         horizontal: true,
     },
     
-    presentation: undefined,
-
-    initialize: function(presentation) {
-        this.presentation = presentation;
+    initialize: function() {
+        this.$el = $(BookKit.Config.Presentation.presentationElement);
 
         // Window load offset scrolling
         $(document).ready(function(e) {
-            console.log("scroll on load");
-            this.scrollTo(this.get('page'));
+            // WebKit seems to call ready before it applies css3
+            // columns.
+            setTimeout(function() {
+                //this.scrollTo(this.get('column'));
+            }.bind(this), 100);
         }.bind(this));
 
         // Keyboard left/right navigation
         $(document).keydown(function(e) {
           if(e.keyCode == 37) {
               console.log("previous");
-              this.previousPage();
+              this.previousColumn();
           } else if(e.keyCode == 39) {
-              console.log("next");
-              this.nextPage();
+              this.nextColumn();
           }
         }.bind(this));
 
         // Keyboard up/down navigation
         // Swipe left/right navigation
+
     },
 
-    nextPage: function() {
-        var current_page = BookKit.Utils.currentColumnNumber();
-        var total_pages = BookKit.Utils.totalColumns();
-        var next_page = current_page + 1;
-        if (next_page <= total_pages) {
-            console.log("scrolling to next", next_page, total_pages);
-            this.scrollTo(next_page);
+    nextColumn: function() {
+        var current_column = BookKit.Presentation.currentColumnNumber();
+        var total_columns = BookKit.Presentation.totalColumns();
+        var next_column = current_column + BookKit.Config.Presentation.columnsToScroll;
+        // console.log(current_column, total_columns, next_column);
+        if (next_column < total_columns) {
+            console.log("scrolling to next", next_column, total_columns);
+            this.scrollTo(next_column, true);
         }
     },
 
-    previousPage: function() {
-        var current_page = BookKit.Utils.currentColumnNumber();
-        var prev_page = current_page - 1;
-        if (prev_page >= 0) {
-            console.log("scrolling to prev", prev_page);
-            this.scrollTo(prev_page);
+    previousColumn: function() {
+        var current_column = BookKit.Presentation.currentColumnNumber();
+        var prev_column = current_column - BookKit.Config.Presentation.columnsToScroll;
+        console.log(current_column, prev_column);
+        if (prev_column >= 0) {
+            this.scrollTo(prev_column, true);
         }
     },
 
-    scrollTo: function(page) {
-        // Scroll to the appropriate page
-        var offset = page * $(window).innerWidth();
+    scrollTo: function(column, animate) {
+        // Scroll to the appropriate column
+        var offset = column * BookKit.Presentation.actualColumnWidth();
+
+        console.log("viewport", BookKit.Presentation.viewportWidth(), 
+            "width", BookKit.Presentation.width(), 
+            "actual column", BookKit.Presentation.actualColumnWidth(), 
+            "offset", offset)
 
         if (this.get('horizontal')) {
-            setTimeout(function() {
-              $('body').scrollLeft(offset);
-              $('body').css('display', 'block');
-            }, 50);
+            if (animate) {
+                $(BookKit.Config.Presentation.presentationElement).animate({scrollLeft: offset}, BookKit.Config.PresentationanimationDuration);
+            } else {
+                this.$el.scrollLeft(offset);
+            }
         } else {
-          $('body').scrollTop(offset);
+            this.$el.scrollTop(offset);
         }
     },
 
@@ -116,20 +123,19 @@ _.extend(BookKit.Behaviors.HighlightImmediately.prototype, BookKit.BaseClass.pro
         duration: 0,
     },
 
-    presentation: undefined,
-
-    initialize: function(presentation) {
-        this.presentation = presentation;
-        $('body').on('mouseup', function(e) {
-            var cfi = BookKit.CFI.selectionCFI();
-            console.log("Highlight Immediately Behavior", cfi);
-            window.getSelection().removeAllRanges();
-            BookKit.Annotation.addAnnotation(cfi, 
-                {
-                    highlight: cfi,
-                    highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
-                    highlightColor: BookKit.Constants.BKAnnotationColorBlue
-                });
+    initialize: function() {
+        $(document).on('ready', function() {
+            $('body').on('mouseup', function(e) {
+                var cfi = BookKit.CFI.selectionCFI();
+                console.log("Highlight Immediately Behavior", cfi);
+                window.getSelection().removeAllRanges();
+                BookKit.Annotation.addAnnotation(cfi, 
+                    {
+                        highlight: cfi,
+                        highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
+                        highlightColor: BookKit.Constants.BKAnnotationColorBlue
+                    });
+            });
         });
     },
 

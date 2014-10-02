@@ -35,42 +35,6 @@ var Presentation = BookKit.Presentation = function(attributes) {
     BookKit.BaseClass.apply(this, arguments);
 };
 
-// BookKit Pagination Presentation
-// ===========================
-// Set up a "page" using columns. Goes along with
-// BookKit.Behavior.Navigation for navigating the columns.
-var Paginate = BookKit.Presentation.Paginate = function(attributes) {
-    BookKit.BaseClass.apply(this, arguments);
-};
-_.extend(BookKit.Presentation.Paginate.prototype, BookKit.BaseClass.prototype, {
-    defaults: {
-        verticalPadding: 100,
-        horizontalPadding: 200,
-    },
-    
-    presentation: undefined,
-
-    initialize: function(presentation) {
-        this.presentation = presentation;
-
-        // CSS adjustments that are relevent to pagination
-        // $('body').css('overflow', 'hidden');
-        $('body').css('margin', 0);
-        $('body').css('padding', 
-            this.get('verticalPadding') + 'px ' + 
-            this.get('horizontalPadding') + 'px');
-        $('body').css('-webkit-column-gap', 
-            (this.get('horizontalPadding') * 2) +'px');
-        $('body').css('height', 
-            $(window).innerHeight() - (this.get('verticalPadding') * 2) + 'px');
-        $('body').css('-webkit-column-width', 
-            $(window).innerWidth() - this.get('horizontalPadding') + 'px');
-
-    },
-
-});
-
-
 // Annotation Canvas
 // -----------------
 // The annotation canvas handles the drawing of annotations. Highlights
@@ -91,23 +55,25 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     mouseIsDown: false,
     mousePosition: {},
 
-    presentation: undefined,
-    
-    initialize: function(presentation) {
-        this.set('width', $('body')[0].scrollWidth);
-        this.set('height', $('body')[0].scrollHeight);
+    initialize: function() {
+        $(document).ready(function() {
+            this.set('width', BookKit.Presentation.width());
+            this.set('height', BookKit.Presentation.viewportHeight());
 
-        var canvas = document.createElement("canvas");
-        $(canvas).attr('id', '-BookKit-Annotation-Canvas');
-        $(canvas).attr('width', this.get('width'));
-        $(canvas).attr('height', this.get('height'));
-        $(canvas).css('position', 'fixed');
+            this.$el = $(BookKit.Config.Presentation.presentationElement);
 
-        // This is webkit only.
-        $('body').css('background', '-webkit-canvas(-BookKit-Annotation-Canvas) no-repeat');
+            var canvas = document.createElement("canvas");
+            $(canvas).attr('id', '-BookKit-Annotation-Canvas');
+            $(canvas).attr('width', this.get('width'));
+            $(canvas).attr('height', this.get('height'));
+            $(canvas).css('position', 'fixed');
 
-        this.canvas = canvas;
-        this.refresh();
+            // This is webkit only.
+            this.$el.css('background', '-webkit-canvas(-BookKit-Annotation-Canvas) no-repeat');
+
+            this.canvas = canvas;
+            this.refresh();
+        }.bind(this));
 
         $(document).on('addedAnnotation', function(e, annotation) {
             this.render(annotation);
@@ -118,6 +84,7 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             this.remove(annotation);
         }.bind(this));
 
+        
     },
 
     canvasContext: function() {
@@ -176,8 +143,8 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
                 }
 
                 // Fill the rect.
-                var left_offset = $('body')[0].scrollLeft;
-                var top_offset = $('body')[0].scrollTop;
+                var left_offset = this.$el.scrollLeft();
+                var top_offset = this.$el.scrollTop();
                 canvas_context.fillRect(rect.left + left_offset, rect.top + top_offset, 
                     rect.width, rect.height);
                 BookKit.Annotations[cfi.get("cfi")].rects.push(rect);
@@ -195,9 +162,9 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             // anchor and style and position it appropriately. 
             // var canvas_context = this.canvas.getContext('2d');
             var canvas_context = this.canvasContext();
-            var columnWidth = $(window).innerWidth();
+            var columnWidth = BookKit.Presentation.columnWidth();
             var originalRect = cfi.ranges[0].getClientRects()[0];
-            var columnNumber = BookKit.Utils.columnNumberForPosition(originalRect.left);
+            var columnNumber = BookKit.Presentation.columnNumberForPosition(originalRect.left);
             var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
             var rect = {
                 left: left, 
@@ -230,9 +197,9 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             
             // var canvas_context = this.canvas.getContext('2d');
             var canvas_context = this.canvasContext();
-            var columnWidth = $(window).innerWidth();
+            var columnWidth = BookKit.Presentation.columnWidth();
             var originalRect = cfi.ranges[0].getClientRects()[0];
-            var columnNumber = BookKit.Utils.columnNumberForPosition(originalRect.left);
+            var columnNumber = BookKit.Presentation.columnNumberForPosition(originalRect.left);
             var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
             var rect = {
                 left: left, 
@@ -256,17 +223,17 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
 });
 
 
-// BookKit Presentation
-// ====================
+// BookKit Presentation Instance Methods
+// =====================================
 _.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
     defaults: {
         behaviors: {
-            navigation: BookKit.Behaviors.Navigate,
-            highlights: BookKit.Behaviors.HighlightImmediately,
+            navigation: new BookKit.Behaviors.Navigate(),
+            highlights: new BookKit.Behaviors.HighlightImmediately(),
         },
         presentations: {
-            pagination: BookKit.Presentation.Paginate,
-            annotation: BookKit.Presentation.Annotate,
+            // pagination: new BookKit.Presentation.Paginate(),
+            annotation: new BookKit.Presentation.Annotate(),
         }
     },
 
@@ -287,18 +254,123 @@ _.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
         // of the body (bottom so we don't interfere with any CFIs)
         this.presentationContainer = document.createElement("div");
         $(this.presentationContainer).attr('id', '-BookKit-Presentation');
-        $(this.presentationContainer).appendTo('body');
+        $(this.presentationContainer).appendTo(BookKit.Config.Presentation.presentationElement);
 
-        _.each(this.get('presentations'), function(value, key) {
-            this.presentations[key] = new value(this);
-        }.bind(this));
-        
-        _.each(this.get('behaviors'), function(value, key) {
-            this.behaviors[key] = new value(this);
-        }.bind(this));
+        // CSS adjustments that are relevent to pagination
+        $(document).ready(this.setColumnSizes);
+        $(window).resize(this.setColumnSizes);
+
+    },
+
+    setColumnSizes: function() {
+        var $el = $(BookKit.Config.Presentation.presentationElement);
+        var height = BookKit.Presentation.height();
+        var column_gap = BookKit.Config.Presentation.horizontalPadding * 2;
+        var column_width = BookKit.Presentation.innerColumnWidth();
+
+        $el.css('overflow', 'hidden');
+        $el.css('margin', 0);
+        $el.css('padding-top', BookKit.Config.Presentation.verticalPadding);
+        $el.css('padding-bottom', BookKit.Config.Presentation.verticalPadding);
+        $el.css('padding-left', BookKit.Config.Presentation.horizontalPadding);
+        $el.css('padding-right', BookKit.Config.Presentation.horizontalPadding);
+        $el.css('height', height + 'px');
+        $el.css('-webkit-column-width', column_width + 'px');
+        $el.css('-webkit-column-gap', column_gap + 'px');
+        $el.css('-webkit-column-rule',  '1px outset #eeeeee');
+        $el.css('width', BookKit.Presentation.width());
 
     },
 
 });
+// Helpful class methods
+_.extend(BookKit.Presentation, {
+    // The height of the viewport.
+    viewportHeight: function() {
+        return $(BookKit.Config.Presentation.viewportElement).height();
+    },
 
+    // The height of the reader itself, within the viewport (accounts
+    // for padding).
+    height: function() {
+        return parseInt(BookKit.Presentation.viewportHeight() - 
+                (BookKit.Config.Presentation.verticalPadding * 2));
+    },
+
+    // The width of the viewport containing the content.
+    viewportWidth: function() {
+        // XXX: Why are these different?
+        var width = BookKit.Config.Presentation.viewportElement.innerWidth;
+        // var width = $(BookKit.Config.Presentation.viewportElement).innerWidth();
+        return width;
+    },
+      
+    // The total width of the content — this is the scroll width of the
+    // content-holding element.
+    width: function() {
+        return $(BookKit.Config.Presentation.presentationElement)[0].scrollWidth + 
+                BookKit.Config.Presentation.horizontalPadding;
+    },
+
+    // The total width of a column including the gaps.
+    columnWidth: function() {
+        return parseInt(BookKit.Presentation.viewportWidth()/BookKit.Config.Presentation.columns);
+        // return parseInt(BookKit.Presentation.viewportWidth()/BookKit.Config.Presentation.columns) + 4;
+    },
+
+    // The width of a column without the gaps
+    innerColumnWidth: function () {
+        return parseInt(BookKit.Presentation.columnWidth() - 
+                BookKit.Config.Presentation.horizontalPadding * 2);
+    },
+
+    // CSS3 column-width is merely a "hint" according to MDN. This gets
+    // our actual column width after the columns have been set up.
+    actualColumnWidth: function() {
+        // An approximate column number for our actual width calculation
+        var columnsNumber = Math.floor(
+            (BookKit.Presentation.width() - BookKit.Config.Presentation.horizontalPadding)/
+            (BookKit.Presentation.columnWidth())
+        );
+        if (isNaN(columnsNumber) || columnsNumber < 1) 
+            columnsNumber = 1;
+
+        var actualWidth = $(BookKit.Config.Presentation.presentationElement)[0].scrollWidth / columnsNumber;
+        return Math.ceil(actualWidth);
+    },
+
+    // Total number of columns (based on actual column width rather than
+    // the css3 column-width hint).
+    totalColumns: function() {
+        var columnsNumber = Math.floor(
+            (BookKit.Presentation.width() - BookKit.Config.Presentation.horizontalPadding)/
+            (BookKit.Presentation.actualColumnWidth())
+        );
+        if (isNaN(columnsNumber) || columnsNumber < 1) 
+            columnsNumber = 1;
+        return columnsNumber;
+    },
+
+    // Column number for a given left offset
+    columnNumberForPosition: function(left) {
+        var columnWidth = BookKit.Presentation.columnWidth();
+        var columnNumber = parseInt(left / columnWidth);
+        return columnNumber;
+    },
+
+    // Return the current column number in view
+    currentColumnNumber: function(columnElm) {
+        var leftPosition = $(BookKit.Config.Presentation.presentationElement).scrollLeft();
+        var columnNumber = BookKit.Presentation.columnNumberForPosition(leftPosition);
+        return Math.ceil(columnNumber);
+    },
+
+    // Returns a Javascript range for the top of the current column
+    rangeForCurrentColumn: function() {
+        var columnNumber = BookKit.Presentation.currentColumnNumber();
+        var range = document.caretRangeFromPoint(columnNumber, 0);
+        return range;
+    },
+
+});
 

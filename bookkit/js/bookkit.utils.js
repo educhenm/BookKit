@@ -32,55 +32,6 @@
 // =============
 // Utility and convenience functions for BookKit. 
 
-// Total number of columns
-// http://stackoverflow.com/questions/10276359/get-number-of-columns-created-by-css-column-width
-BookKit.Utils.totalColumns = function() {
-    var $el = $('body');
-    var width = $el[0].scrollWidth;
-
-    var columnWidth;
-    var columnGap;
-    var paddingLeft = parseInt($el.css('padding-left'), 10);
-    var paddingRight = parseInt($el.css('padding-right'), 10);
-    $.each(['-webkit-','-moz-',''], function(i, prefix) {
-        var _width = parseInt($el.css(prefix+'column-width'), 10);
-        var _gap =   parseInt($el.css(prefix+'column-gap'), 10);
-        if (!isNaN(_width))
-            columnWidth = _width;
-        if (!isNaN(_gap))
-            columnGap = _gap;
-    });
-
-    console.log(width - paddingLeft - paddingRight);
-    console.log(columnWidth + columnGap);
-    var columnsNumber = Math.floor((width - paddingLeft - paddingRight)/(columnWidth + columnGap) );
-    if (isNaN(columnsNumber) || columnsNumber < 1) 
-        columnsNumber = 1;
-
-    return columnsNumber;
-}
-
-BookKit.Utils.columnNumberForPosition = function(left) {
-    var columnWidth = $(window).innerWidth();
-    var columnNumber = parseInt(left / columnWidth);
-    return columnNumber;
-};
-
-// Return the current column number in view
-BookKit.Utils.currentColumnNumber = function(columnElm) {
-    var leftPosition = $('body').scrollLeft();
-    var columnNumber = BookKit.Utils.columnNumberForPosition(leftPosition);
-    return Math.ceil(columnNumber);
-};
-
-// Returns a Javascript range for the top of the current column
-BookKit.Utils.rangeForCurrentColumn = function() {
-    var columnNumber = BookKit.Utils.currentColumnNumber();
-    var range = document.caretRangeFromPoint(columnNumber, 0);
-    return range;
-};
-
-
 // Take a given selection range that may span DOM elements and return 
 // an array of equivelent ranges that do not.
 // http://stackoverflow.com/a/12823606
@@ -178,44 +129,4 @@ BookKit.Utils.makeSafeForCSS = function(name) {
 }
 
 
-/////////////////////////////////////////////////////////////////////// 
-// BookKit.BaseClass
-// -----------------
-// Lightweight internal model class for BookKit that handles default
-// attributes/setting/getting.
-// Meant to be roughly compatible with Backbone.Model in terms of
-// initialization and attributes.
-var BaseClass = BookKit.BaseClass = function(attributes) {
-    var attrs = attributes || {};
-    // attrs = _.defaults({}, attrs, _.result(this, 'defaults'));
-    var allowed = {};
-    _.map(attrs, function(val, key){ if(!_.isUndefined(this[key])) { allowed[key] = val; } }, this.defaults);
-    this.attributes = _.extend({}, this.defaults, allowed);  
-  
-    this.initialize.apply(this, arguments);
-};
-_.extend(BaseClass.prototype, {
-    defaults: {},
-
-    initialize: function() {
-    },
-
-    set: function(attr, value) {
-        if (_.isString(attr) && !_.isUndefined(this.defaults[attr])) { 
-            this.attributes[attr] = value;
-        } else {
-            _.each(attr, function(value, attr) {
-                if (!_.isUndefined(this.defaults[key])) {
-                    this.attributes[attr] = value;
-                }
-            }, this);
-        }
-    },
- 
-    // Get the value of an attribute
-    get: function(attr) {
-        return (this.attributes[attr]);
-    }
-
-});
 

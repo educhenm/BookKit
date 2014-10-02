@@ -114,8 +114,74 @@ BookKit.Config = {
             '#44b705', // BKAnnotationColorGreen
             '#000000' // BKAnnotationColorBlack
         ]
-    }
+    },
+
+    Presentation: {
+        // Number of columns in the viewport
+        columns: 2,
+
+        // Number of columns to scroll when moving to next "page"
+        columnsToScroll: 2,
+
+        // Horizontal padding within the viewport and between columns
+        horizontalPadding: 100,
+
+        // Vertical padding within the viewport
+        verticalPadding: 100,
+
+        // The element that will have columns and presentation attached
+        presentationElement: 'body',
+
+        // The viewport element
+        viewportElement: window,
+
+        // Duration for presentation animations
+        animationDuration: 100,
+    },
+
 };
 
 // A list of annotation objects associated with this particular XHTML document
 BookKit.Annotations = [];
+
+/////////////////////////////////////////////////////////////////////// 
+// BookKit.BaseClass
+// -----------------
+// Lightweight internal model class for BookKit that handles default
+// attributes/setting/getting.
+// Meant to be roughly compatible with Backbone.Model in terms of
+// initialization and attributes.
+var BaseClass = BookKit.BaseClass = function(attributes) {
+    var attrs = attributes || {};
+    // attrs = _.defaults({}, attrs, _.result(this, 'defaults'));
+    var allowed = {};
+    _.map(attrs, function(val, key){ if(!_.isUndefined(this[key])) { allowed[key] = val; } }, this.defaults);
+    this.attributes = _.extend({}, this.defaults, allowed);  
+  
+    this.initialize.apply(this, arguments);
+};
+_.extend(BaseClass.prototype, {
+    defaults: {},
+
+    initialize: function() {
+    },
+
+    set: function(attr, value) {
+        if (_.isString(attr) && !_.isUndefined(this.defaults[attr])) { 
+            this.attributes[attr] = value;
+        } else {
+            _.each(attr, function(value, attr) {
+                if (!_.isUndefined(this.defaults[key])) {
+                    this.attributes[attr] = value;
+                }
+            }, this);
+        }
+    },
+ 
+    // Get the value of an attribute
+    get: function(attr) {
+        return (this.attributes[attr]);
+    }
+
+});
+
