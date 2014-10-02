@@ -136,13 +136,15 @@ BookKit.Config = {
         viewportElement: window,
 
         // Duration for presentation animations
-        animationDuration: 100,
+        animationDuration: 0,
+
+        // Global style as opposed to 
     },
 
 };
 
 // A list of annotation objects associated with this particular XHTML document
-BookKit.Annotations = [];
+BookKit.Annotations = {};
 
 /////////////////////////////////////////////////////////////////////// 
 // BookKit.BaseClass

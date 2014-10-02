@@ -56,7 +56,10 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     mousePosition: {},
 
     initialize: function() {
-        $(document).ready(function() {
+        this.$el = $(BookKit.Config.Presentation.presentationElement);
+
+        $(document).on('presented', function() {
+            console.log("presented");
             this.set('width', BookKit.Presentation.width());
             this.set('height', BookKit.Presentation.viewportHeight());
 
@@ -73,6 +76,13 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
 
             this.canvas = canvas;
             this.refresh();
+
+            // Render existing annotations
+            _.each(BookKit.Annotations, function(annotation, cfi) {
+                this.render(annotation);
+                this.refresh();
+            }.bind(this));
+
         }.bind(this));
 
         $(document).on('addedAnnotation', function(e, annotation) {
@@ -162,7 +172,7 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             // anchor and style and position it appropriately. 
             // var canvas_context = this.canvas.getContext('2d');
             var canvas_context = this.canvasContext();
-            var columnWidth = BookKit.Presentation.columnWidth();
+            var columnWidth = BookKit.Presentation.actualColumnWidth();
             var originalRect = cfi.ranges[0].getClientRects()[0];
             var columnNumber = BookKit.Presentation.columnNumberForPosition(originalRect.left);
             var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
@@ -197,7 +207,7 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             
             // var canvas_context = this.canvas.getContext('2d');
             var canvas_context = this.canvasContext();
-            var columnWidth = BookKit.Presentation.columnWidth();
+            var columnWidth = BookKit.Presentation.actualColumnWidth();
             var originalRect = cfi.ranges[0].getClientRects()[0];
             var columnNumber = BookKit.Presentation.columnNumberForPosition(originalRect.left);
             var left = columnWidth * columnNumber + BookKit.Config.Annotations.padding;
@@ -279,6 +289,8 @@ _.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
         $el.css('-webkit-column-gap', column_gap + 'px');
         $el.css('-webkit-column-rule',  '1px outset #eeeeee');
         $el.css('width', BookKit.Presentation.width());
+
+        $(document).trigger('presented');
 
     },
 

@@ -46,7 +46,7 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
         this.$el = $(BookKit.Config.Presentation.presentationElement);
 
         // Window load offset scrolling
-        $(document).ready(function(e) {
+        $(document).on('presented', function(e) {
             // WebKit seems to call ready before it applies css3
             // columns.
             setTimeout(function() {
@@ -57,7 +57,6 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
         // Keyboard left/right navigation
         $(document).keydown(function(e) {
           if(e.keyCode == 37) {
-              console.log("previous");
               this.previousColumn();
           } else if(e.keyCode == 39) {
               this.nextColumn();
@@ -73,9 +72,7 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
         var current_column = BookKit.Presentation.currentColumnNumber();
         var total_columns = BookKit.Presentation.totalColumns();
         var next_column = current_column + BookKit.Config.Presentation.columnsToScroll;
-        // console.log(current_column, total_columns, next_column);
         if (next_column < total_columns) {
-            console.log("scrolling to next", next_column, total_columns);
             this.scrollTo(next_column, true);
         }
     },
@@ -83,7 +80,6 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
     previousColumn: function() {
         var current_column = BookKit.Presentation.currentColumnNumber();
         var prev_column = current_column - BookKit.Config.Presentation.columnsToScroll;
-        console.log(current_column, prev_column);
         if (prev_column >= 0) {
             this.scrollTo(prev_column, true);
         }
@@ -93,14 +89,9 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
         // Scroll to the appropriate column
         var offset = column * BookKit.Presentation.actualColumnWidth();
 
-        console.log("viewport", BookKit.Presentation.viewportWidth(), 
-            "width", BookKit.Presentation.width(), 
-            "actual column", BookKit.Presentation.actualColumnWidth(), 
-            "offset", offset)
-
         if (this.get('horizontal')) {
             if (animate) {
-                $(BookKit.Config.Presentation.presentationElement).animate({scrollLeft: offset}, BookKit.Config.PresentationanimationDuration);
+                $(BookKit.Config.Presentation.presentationElement).animate({scrollLeft: offset}, BookKit.Config.Presentation.animationDuration);
             } else {
                 this.$el.scrollLeft(offset);
             }
@@ -124,7 +115,7 @@ _.extend(BookKit.Behaviors.HighlightImmediately.prototype, BookKit.BaseClass.pro
     },
 
     initialize: function() {
-        $(document).on('ready', function() {
+        $(document).on('presented', function() {
             $('body').on('mouseup', function(e) {
                 var cfi = BookKit.CFI.selectionCFI();
                 console.log("Highlight Immediately Behavior", cfi);
