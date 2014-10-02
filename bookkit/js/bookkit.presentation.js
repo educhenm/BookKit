@@ -254,20 +254,23 @@ _.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
     presentations: {},
 
     initialize: function() {
-        // Use the font loader for FontAwesome, which we use for
-        // annotations. We don't need to do any special success/error
-        // handling (though we probably should do error handling if the
-        // font fails to load) to get polyfill.
-        document.fontloader.loadFont({font: ' 16px FontAwesome'});
+        $(document).on('ready', function() {
+            // Use the font loader for FontAwesome, which we use for
+            // annotations. We don't need to do any special success/error
+            // handling (though we probably should do error handling if the
+            // font fails to load) to get polyfill.
+            document.fontloader.loadFont({font: ' 16px FontAwesome'});
 
-        // Add a container for presentation-layer elements to the BOTTOM
-        // of the body (bottom so we don't interfere with any CFIs)
-        this.presentationContainer = document.createElement("div");
-        $(this.presentationContainer).attr('id', '-BookKit-Presentation');
-        $(this.presentationContainer).appendTo(BookKit.Config.Presentation.presentationElement);
+            // Add a container for presentation-layer elements to the BOTTOM
+            // of the body (bottom so we don't interfere with any CFIs)
+            this.presentationContainer = document.createElement("div");
+            $(this.presentationContainer).attr('id', '-BookKit-Presentation');
+            $(this.presentationContainer).appendTo(BookKit.Config.Presentation.presentationElement);
 
-        // CSS adjustments that are relevent to pagination
-        $(document).ready(this.setColumnSizes);
+            // CSS adjustments that are relevent to pagination
+            $(document).ready(this.setColumnSizes);
+        }.bind(this));
+
         $(window).resize(this.setColumnSizes);
 
     },
