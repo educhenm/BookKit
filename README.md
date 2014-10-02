@@ -23,7 +23,6 @@ Once an ePub file is decompressed and one of its HTML files opened, the
 following needs to be injected into the header (paths should be adjusted
 as necessary):
 
-    <!-- BOOKKIT INJECTION -->
     <script type="text/javascript" src="../../bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="../../bower_components/underscore/underscore.js"></script>
     <script type="text/javascript" src="../../bower_components/fontloader/fontloader.js"></script>
@@ -39,34 +38,6 @@ as necessary):
     <script type="text/javascript" src="../../bookkit/js/bookkit.behavior.js"></script>
     <script type="text/javascript" src="../../bookkit/js/bookkit.presentation.js"></script>
     <link rel="stylesheet" href="../../bookkit/css/bookkit.presentation.css"/>
-    
-    <script type="text/javascript">
-        // Set up the document portion of CFIs for this file
-        BookKit.Config.Document.cfi = "/6/12!";
-
-        // Set up the presentation layer
-        var presentation = new BookKit.Presentation();
-
-        $('body').css('-webkit-text-size-adjust', '150%');
-
-        // Add annotations
-        $(document).on('ready', function() {
-            // Stately 
-            BookKit.Annotation.addAnnotation(
-                "epubcfi(/6/12!/4/2/2,/1:0,/1:28)",
-                {
-                    highlight: true,
-                    highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
-                    highlightColor: BookKit.Constants.BKAnnotationColorRed,
-
-                    note: true,
-                    noteStyle: BookKit.Constants.BKAnnotationStyleIcon,
-                    noteColor: BookKit.Constants.BKAnnotationColorRed,
-                    noteText: "This is a test note about some very important something or other with some additional text because you know whatever."
-                });
-        });
-    </script>
-    <!-- /BOOKKIT INJECTION -->
 
 These will be simplified at a later date.
 
@@ -75,26 +46,32 @@ be initialized, and the CFI prefix of the document itself within the
 ePub file  needs to be set:
 
     <script type="text/javascript">
+        // Set up the document portion of CFIs for this file
         BookKit.Config.Document.cfi = "/6/12!";
-        var presentation = new BookKit.Presentation(document);
+        var presentation = new BookKit.Presentation();
     </script>
 
-From there BookKit's functions can be called. For example, to highlight
-text upon selection (iBooks style), one would use the following
-JavaScript:
+From there BookKit's functions can be called. For example, to add an
+annotation programmatically (to restore previous annotations, for
+example), one would use the following JavaScript injected into the
+document:
 
+    // Add annotations
+    $(document).on('ready', function() {
+        // Stately 
+        BookKit.Annotation.addAnnotation(
+            "epubcfi(/6/12!/4/2/2,/1:0,/1:28)",
+            {
+                highlight: true,
+                highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
+                highlightColor: BookKit.Constants.BKAnnotationColorRed,
 
-      // test add selection
-      $('body').mouseup( function() {
-          var cfi = BookKit.CFI.selectionCFI();
-          presentation.annotationCanvas.addAnnotation(cfi, 
-              {
-                  highlight: cfi,
-                  highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
-                  highlightColor: BookKit.Constants.BKAnnotationColorBlue
-              });
-      });
-
+                note: true,
+                noteStyle: BookKit.Constants.BKAnnotationStyleIcon,
+                noteColor: BookKit.Constants.BKAnnotationColorRed,
+                noteText: "This is a test note about some very important something or other with some additional text because you know whatever."
+            });
+    });
 
 At the moment BookKit's AnnotationCanvas presentation layer is
 WebKit-only.
