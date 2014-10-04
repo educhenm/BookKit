@@ -399,7 +399,7 @@ _.extend(BookKit.CFI.prototype, BookKit.BaseClass.prototype, {
 
             this.range = range;
             this.ranges = BookKit.Utils.getSafeRanges(range);
-        } else {
+        } else if (end != null) {
             // If we're not given a ranged CFI, create a 1-char range at
             // the CFI's location. This will be used for locating
             // bookmarks and notes locations in the document.

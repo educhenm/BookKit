@@ -49,9 +49,9 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
         $(document).on('presented', function(e) {
             // WebKit seems to call ready before it applies css3
             // columns.
+            this.scrollTo(BookKit.Config.Presentation.columnToStart);
             setTimeout(function() {
-                //this.scrollTo(this.get('column'));
-            }.bind(this), 100);
+            }.bind(this), 500);
         }.bind(this));
 
         // Keyboard left/right navigation
@@ -62,7 +62,9 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
               this.nextColumn();
           }
         }.bind(this));
-
+        $(document).on('swipeleft',this.previousColumn);
+        $(document).on('swiperight',this.nextColumn);
+                    
         // Keyboard up/down navigation
         // Swipe left/right navigation
 
@@ -118,14 +120,15 @@ _.extend(BookKit.Behaviors.HighlightImmediately.prototype, BookKit.BaseClass.pro
         $(document).on('presented', function() {
             $('body').on('mouseup', function(e) {
                 var cfi = BookKit.CFI.selectionCFI();
-                console.log("Highlight Immediately Behavior", cfi);
-                window.getSelection().removeAllRanges();
-                BookKit.Annotation.addAnnotation(cfi, 
-                    {
-                        highlight: cfi,
-                        highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
-                        highlightColor: BookKit.Constants.BKAnnotationColorBlue
-                    });
+                // For highlights, make sure we have ranges
+                if (cfi.ranges != undefined) {
+                    window.getSelection().removeAllRanges();
+                    BookKit.Annotation.addAnnotation(cfi, {
+                            highlight: cfi,
+                            highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
+                            highlightColor: BookKit.Constants.BKAnnotationColorBlue
+                        });
+                }
             });
         });
     },

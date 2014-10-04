@@ -59,7 +59,6 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
         this.$el = $(BookKit.Config.Presentation.presentationElement);
 
         $(document).on('presented', function() {
-            console.log("presented");
             this.set('width', BookKit.Presentation.width());
             this.set('height', BookKit.Presentation.viewportHeight());
 
@@ -82,7 +81,6 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
                 this.render(annotation);
                 this.refresh();
             }.bind(this));
-
         }.bind(this));
 
         $(document).on('addedAnnotation', function(e, annotation) {
@@ -94,7 +92,6 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             this.remove(annotation);
         }.bind(this));
 
-        
     },
 
     canvasContext: function() {
@@ -259,7 +256,7 @@ _.extend(BookKit.Presentation.prototype, BookKit.BaseClass.prototype, {
             // annotations. We don't need to do any special success/error
             // handling (though we probably should do error handling if the
             // font fails to load) to get polyfill.
-            document.fontloader.loadFont({font: ' 16px FontAwesome'});
+            document.fontloader.loadFont({font: '16px FontAwesome'});
 
             // Add a container for presentation-layer elements to the BOTTOM
             // of the body (bottom so we don't interfere with any CFIs)
