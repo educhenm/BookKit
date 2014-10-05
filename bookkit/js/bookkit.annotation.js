@@ -61,7 +61,7 @@ _.extend(BookKit.Annotation.prototype, BookKit.BaseClass.prototype, {
 
         if ((typeof cfi == 'string') || (cfi instanceof String)) {
             // We were given a string. Parse it.
-            cfi = new BookKit.CFI({cfi: cfi}).parseAndResolve();
+            cfi = new BookKit.CFI(cfi).parseAndResolve();
             this.set('cfi', cfi);
         }
 
@@ -86,14 +86,14 @@ _.extend(BookKit.Annotation, {
 
         // We were given a string. Parse it.
         if ((typeof cfiOrString == 'string') || (cfiOrString instanceof String))
-            cfi = new BookKit.CFI({cfi: cfiOrString}).parseAndResolve();
+            cfi = new BookKit.CFI(cfiOrString).parseAndResolve();
         else
             cfi = cfiOrString;
 
         annotationProps.cfi = cfi;
         annotation = new BookKit.Annotation(annotationProps);
 
-        BookKit.Annotations[cfi.get("cfi")] = annotation;
+        BookKit.Annotations[cfi.cfistring] = annotation;
         $(document).trigger('addedAnnotation', [annotation]);
     },
 
@@ -107,7 +107,7 @@ _.extend(BookKit.Annotation, {
             (annotationOrCFI instanceof BookKit.CFI)) {
 
             if ((typeof annotationOrCFI == 'string') || (annotationOrCFI instanceof String))
-                cfi = new BookKit.CFI({cfi: annotationOrCFI}).parseAndResolve();
+                cfi = new BookKit.CFI(annotationOrCFI).parseAndResolve();
             else
                 cfi = annotationOrCFI;
 
@@ -115,8 +115,8 @@ _.extend(BookKit.Annotation, {
             cfi = annotation.get("cfi");
         }
 
-        var annotation = BookKit.Annotations[cfi.get("cfi")];
-        var index = BookKit.Annotations.indexOf(cfi.get("cfi"));
+        var annotation = BookKit.Annotations[cfi.cfistring];
+        var index = BookKit.Annotations.indexOf(cfi.cfistring);
         BookKit.Annotations.splice(index, 1);
         $(document).trigger('removedAnnotation', [annotation]);
     },

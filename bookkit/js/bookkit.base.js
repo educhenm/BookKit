@@ -28,13 +28,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-BookKit = {
-    Config: {},
-    Events: {},
-    Utils: {},
-    Models: {}
-};
-
+var BookKit = BookKit || {};
 
 BookKit.Constants = {
     BKAnnotationNone: false,
@@ -58,22 +52,9 @@ BookKit.Constants = {
 };
 
 BookKit.Config = {
-    // For CFI purposes, this particular XHTML file needs a document
-    // identifier.
-    Document: {
-        cfi: "",
-    },
-
-    // Have our CGI generation ignore all elements with the given
-    // selectors.
-    CFI: {
-        ignore: '.-BookKit-Annotation',
-    },
-
     // Annotation properties
     Annotations: {
-        totalMargin: 200,
-        padding: 100,
+        padding: 50,
         underlineThickness: 2,
         noteWidth: 200,
         noteHeight: 100,
@@ -123,6 +104,9 @@ BookKit.Config = {
         // Number of columns to scroll when moving to next "page"
         columnsToScroll: 2,
 
+        // Column to start at
+        columnToStart: 5,
+
         // Horizontal padding within the viewport and between columns
         horizontalPadding: 100,
 
@@ -138,7 +122,6 @@ BookKit.Config = {
         // Duration for presentation animations
         animationDuration: 0,
 
-        // Global style as opposed to 
     },
 
 };
@@ -162,6 +145,7 @@ var BaseClass = BookKit.BaseClass = function(attributes) {
   
     this.initialize.apply(this, arguments);
 };
+
 _.extend(BaseClass.prototype, {
     defaults: {},
 

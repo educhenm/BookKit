@@ -105,7 +105,7 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     },
 
     render: function(annotation) {
-        BookKit.Annotations[annotation.get("cfi").get("cfi")].rects = [];
+        BookKit.Annotations[annotation.get("cfi").cfistring].rects = [];
 
         if (annotation.get("bookmark"))
             this.renderBookmark(annotation);
@@ -120,14 +120,14 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     remove: function(annotation) {
         // It doesn't matter whether we're removing a bookmark, note, or
         // highlight. We need to clear the canvas rects for all types.
-        var rects = BookKit.Annotations[cfi.get("cfi")].rects;
+        var rects = BookKit.Annotations[cfi.cfistring].rects;
         // var canvas_context = this.canvas.getContext('2d');
         var canvas_context = this.canvasContext();
 
         _.each(rects, function(rect, index, rects) {
             canvas_context.clearRect(rect.left, rect.top, rect.width, rect.height);
         });
-        BookKit.Annotations[cfi.get("cfi")].rects = [];
+        BookKit.Annotations[cfi.cfistring].rects = [];
     },
 
     renderHighlight: function(annotation) {
@@ -154,7 +154,7 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
                 var top_offset = this.$el.scrollTop();
                 canvas_context.fillRect(rect.left + left_offset, rect.top + top_offset, 
                     rect.width, rect.height);
-                BookKit.Annotations[cfi.get("cfi")].rects.push(rect);
+                BookKit.Annotations[cfi.cfistring].rects.push(rect);
             }, this);
         }, this);
     },
@@ -188,7 +188,7 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             canvas_context.font = originalRect.height + "px FontAwesome";
             canvas_context.fillText("\uf02e", rect.left, rect.top);
 
-            BookKit.Annotations[cfi.get("cfi")].rects.push(rect);
+            BookKit.Annotations[cfi.cfistring].rects.push(rect);
         }
     },
 
@@ -222,7 +222,7 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
             canvas_context.font = rect.height + "px FontAwesome";
             canvas_context.fillText("\uF075", rect.left, rect.top);
 
-            BookKit.Annotations[cfi.get("cfi")].rects.push(rect);
+            BookKit.Annotations[cfi.cfistring].rects.push(rect);
         }
 
     },

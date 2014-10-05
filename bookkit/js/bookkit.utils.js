@@ -28,6 +28,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
+var BookKit = BookKit || {};
+BookKit.Utils = BookKit.Utils || {};
+
 // BookKit.Utils
 // =============
 // Utility and convenience functions for BookKit. 

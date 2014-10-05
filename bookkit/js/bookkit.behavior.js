@@ -62,8 +62,8 @@ _.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
               this.nextColumn();
           }
         }.bind(this));
-        $(document).on('swipeleft',this.previousColumn);
-        $(document).on('swiperight',this.nextColumn);
+        // $(document).on('swipeleft',this.previousColumn);
+        // $(document).on('swiperight',this.nextColumn);
                     
         // Keyboard up/down navigation
         // Swipe left/right navigation
