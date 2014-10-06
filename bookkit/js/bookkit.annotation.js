@@ -28,98 +28,132 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
+
+var BookKit = BookKit || {};
+
+// A list of annotation objects associated with this particular XHTML document
+BookKit.Annotations = BookKit.Annotations || {};
+
 // Annotation Model
 // ----------------
 // The Annotation model corrosponds to notes, bookmarks, and higlights
 // which are subsequently drawn (if done so using BookKit) using an
 // AnnotationCanvas. 
-var Annotation = BookKit.Annotation = function(attributes) {
-    BookKit.BaseClass.apply(this, arguments);
+BookKit.Annotation = (function () {
+    var Annotation = function(options) {
+        var base = this;
+
+        // The main options. `cfi` is required, the rest as only really
+        // useful if using another layer on top of BookKit.Annotation to
+        // display them, with BookKit.Annotation as the data model for
+        // Annotations.
+        var defaults = {
+            // A BookKit.CFI object or a string EPUB CFI for this
+            // annotation
+            cfi: null,
+
+            // If the annotation is a bookmark, what's its style and
+            // color?
+            bookmark: false,
+            bookmarkStyle: 'none',
+            bookmarkColor: 'none',
+
+            // If the annotation is a highlight, what's its style and
+            // color?
+            highlight: false,
+            highlightStyle: 'none',
+            highlightColor: 'none',
+
+            // If the annotation is a note, what's its style, color, and
+            // text?
+            note: false,
+            noteStyle: 'none',
+            noteColor: 'none',
+            noteText: "",
+        };
+
+        base.options = $.extend({}, defaults, options);
+
+        // The BookKit.CFI object associated with this annotation. If
+        // `options.cfi` is not a BookKit.CFI object, one will be
+        // created from it.
+        base.cfi = undefined;
+
+        base.pixelRects = function() {
+            var rects = [];
+            $.each(base.cfi.ranges, function(index, range) {
+                $.each(range.getClientRects(), function(index, rect) {
+                    rects.push(rect);
+                });
+            });
+            return rects;
+        },
+        
+        // Initialization
+        base.init = function() {
+            if ((typeof base.options.cfi == 'string') || 
+                    (base.options.cfi instanceof String)) {
+                // We were given a string. Parse it.
+                base.cfi = new BookKit.CFI(base.options.cfi).parseAndResolve();
+            } else {
+                base.cfi = base.options.cfi;
+            }
+        };
+
+        // Run initializer
+        base.init();
+
+    };
+
+    return function(options) {
+        return new Annotation(options);
+    };
+})();
+
+// Add an annotation to BookKit's global list of annotations for this
+// document. 
+BookKit.Annotation.addAnnotation = function(cfiOrString, annotationProps) {
+    var cfistring;
+    if ((typeof cfiOrString == 'string') || (cfiOrString instanceof String)) {
+        cfistring = cfiOrString;
+    } else {
+        cfistring = cfiOrString.cfistring;
+    }
+
+    annotationProps.cfi = cfiOrString;
+    var annotation = new BookKit.Annotation(annotationProps);
+
+    BookKit.Annotations[cfistring] = annotation;
+    $(document).trigger('addedAnnotation', [annotation]);
+
+    return annotation;
 };
-_.extend(BookKit.Annotation.prototype, BookKit.BaseClass.prototype, {
-    defaults: {
-        cfi: null,
-        bookmark: false,
-        bookmarkStyle: BookKit.Constants.BKAnnotationStyleNone,
-        bookmarkColor: BookKit.Constants.BKAnnotationColorNone,
 
-        highlight: false,
-        highlightStyle: BookKit.Constants.BKAnnotationStyleNone,
-        highlightColor: BookKit.Constants.BKAnnotationColorNone,
+// Remove an annotation from BookKit's global list of annotations for this
+// document. 
+// Can be given a cfi string, a BookKit.CFI object or a
+// BookKit.Annotation object to identify a particular annotation.
+BookKit.Annotation.removeAnnotation = function(annotationOrCFI) {
+    var annotaiton = undefined;
+    var cfi = undefined;
 
-        note: false,
-        noteStyle: BookKit.Constants.BKAnnotationStyleNone,
-        noteColor: BookKit.Constants.BKAnnotationColorNone,
-        noteText: "",
-    },
+    if ((typeof annotationOrCFI == 'string') || 
+        (annotationOrCFI instanceof String) || 
+        (annotationOrCFI instanceof BookKit.CFI)) {
 
-    cfi: undefined,
-    rects: [],
-
-    initialize : function() {
-        var cfi = this.get('cfi');
-
-        if ((typeof cfi == 'string') || (cfi instanceof String)) {
-            // We were given a string. Parse it.
-            cfi = new BookKit.CFI(cfi).parseAndResolve();
-            this.set('cfi', cfi);
-        }
-
-    },
-
-    pixelRects: function() {
-        var cfi = this.get("cfi");
-        var rects = [];
-        _.each(cfi.ranges, function(range, index, ranges) {
-            _.each(range.getClientRects(), function(rect, index, rects) {
-                rects.push(rect);
-            }, this);
-        }, this);
-        return rects;
-    },
-
-});
-_.extend(BookKit.Annotation, {
-    addAnnotation: function(cfiOrString, annotationProps) {
-        var annotaiton = undefined;
-        var cfi = undefined;
-
-        // We were given a string. Parse it.
-        if ((typeof cfiOrString == 'string') || (cfiOrString instanceof String))
-            cfi = new BookKit.CFI(cfiOrString).parseAndResolve();
+        if ((typeof annotationOrCFI == 'string') || (annotationOrCFI instanceof String))
+            cfi = new BookKit.CFI(annotationOrCFI).parseAndResolve();
         else
-            cfi = cfiOrString;
+            cfi = annotationOrCFI;
 
-        annotationProps.cfi = cfi;
-        annotation = new BookKit.Annotation(annotationProps);
+    } else {
+        cfi = annotation.cfi;
+    }
 
-        BookKit.Annotations[cfi.cfistring] = annotation;
-        $(document).trigger('addedAnnotation', [annotation]);
-    },
+    var annotation = BookKit.Annotations[cfi.cfistring];
+    var index = BookKit.Annotations.indexOf(cfi.cfistring);
+    BookKit.Annotations.splice(index, 1);
+    $(document).trigger('removedAnnotation', [annotation]);
+};
 
-    // Remove an annotation 
-    removeAnnotation: function(annotationOrCFI) {
-        var annotaiton = undefined;
-        var cfi = undefined;
-
-        if ((typeof annotationOrCFI == 'string') || 
-            (annotationOrCFI instanceof String) || 
-            (annotationOrCFI instanceof BookKit.CFI)) {
-
-            if ((typeof annotationOrCFI == 'string') || (annotationOrCFI instanceof String))
-                cfi = new BookKit.CFI(annotationOrCFI).parseAndResolve();
-            else
-                cfi = annotationOrCFI;
-
-        } else {
-            cfi = annotation.get("cfi");
-        }
-
-        var annotation = BookKit.Annotations[cfi.cfistring];
-        var index = BookKit.Annotations.indexOf(cfi.cfistring);
-        BookKit.Annotations.splice(index, 1);
-        $(document).trigger('removedAnnotation', [annotation]);
-    },
-
-});
 

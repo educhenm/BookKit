@@ -12,8 +12,8 @@
     <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="../bower_components/underscore/underscore.js"></script>
     <script type="text/javascript" src="../bookkit/js/jquery.measure.js"></script>
-    <script type="text/javascript" src="../bookkit/js/bookkit.base.js"></script>
     <script type="text/javascript" src="../bookkit/js/bookkit.cfi.js"></script>
+    <script type="text/javascript" src="../bookkit/js/bookkit.annotation.js"></script>
     <!-- /BOOKKIT INJECTION -->
 
     <style type="text/css">
@@ -59,52 +59,81 @@
     <script src="../bower_components/qunit/qunit/qunit.js"></script>
     <script>
 
+    QUnit.module("CFI");
+
     // Set up the document portion of CFIs 
     BookKit.CFI.documentStep = "/6/12!";
 
     QUnit.test("BookKit.CFI: parse existing single-node cfi", function(assert) {
-      // Test single node CFI
-      var cfistring = "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)";
-      var cfi = new BookKit.CFI(cfistring).parseAndResolve();
-      console.log(cfi);
-      console.log(cfi.ranges);
-      // Try to do a bit of introspection
-      assert.equal(cfi.ranges.length, 1, "Passed!" );
-      assert.equal(cfi.steps.length, 3, "Passed!" );
+        // Test single node CFI
+        var cfistring = "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+        // Try to do a bit of introspection
+        assert.equal(cfi.steps.length, 3, "parsed");
+        assert.equal(cfi.ranges.length, 1, "resolved");
     });
 
     QUnit.test("BookKit.CFI: parse existing multiple node-spanning cfi", function(assert) {
-      var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)";
-      var cfi = new BookKit.CFI(cfistring).parseAndResolve();
-      console.log(cfi);
-      // Try to do a bit of introspection
-      assert.equal(cfi.ranges.length, 4, "Passed!" );
-      assert.equal(cfi.steps.length, 3, "Passed!" );
+        var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+        // Try to do a bit of introspection
+        assert.equal(cfi.steps.length, 3, "parsed");
+        assert.equal(cfi.ranges.length, 4, "resolved");
     });
     
     QUnit.test("BookKit.CFI: create single-node cfi for range", function(assert) {
-      // "Introibo ad altare Dei"
-      var singleNode = $($($('.test-content').contents()[3]).contents()[1]).contents()[0];
-      var range = document.createRange();
-      range.setStart(singleNode, 0);
-      range.setEnd(singleNode, 22);
-      var cfi = BookKit.CFI.cfiForRange(range);
-      assert.equal(cfi.cfistring, "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)", "Passed!" );
+        // "Introibo ad altare Dei"
+        var singleNode = $($($('.test-content').contents()[3]).contents()[1]).contents()[0];
+        var range = document.createRange();
+        range.setStart(singleNode, 0);
+        range.setEnd(singleNode, 22);
+        var cfi = BookKit.CFI.cfiForRange(range);
+        assert.equal(cfi.cfistring, "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)", "valid cfi");
     });
 
     QUnit.test("BookKit.CFI: create multiple node-spanning cfi for range", function(assert) {
-      // "fearful jesuit! Solemnly"
-      var startNode = $($('.test-content').contents()[7]).contents()[0];
-      var endNode = $($('.test-content').contents()[9]).contents()[0];
-      var range = document.createRange();
-      range.setStart(startNode, 31);
-      range.setEnd(endNode, 8);
-      var cfi = BookKit.CFI.cfiForRange(range);
-      assert.equal(cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", "Passed!" );
+        // "fearful jesuit! Solemnly"
+        var startNode = $($('.test-content').contents()[7]).contents()[0];
+        var endNode = $($('.test-content').contents()[9]).contents()[0];
+        var range = document.createRange();
+        range.setStart(startNode, 31);
+        range.setEnd(endNode, 8);
+        var cfi = BookKit.CFI.cfiForRange(range);
+        assert.equal(cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", "valid cfi");
     });
     
-    
+    QUnit.module("Annotations");
 
+    QUnit.test("BookKit.Annotation: create annotation from cfi string", function(assert) {
+        var annotation = new BookKit.Annotation({cfi: "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)"});
+        assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)", 
+            "valid annotation");
+    });
+    
+    QUnit.test("BookKit.Annotation: create annotation from cfi object", function(assert) {
+        var cfistring = "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+        var annotation = new BookKit.Annotation({cfi: cfi});
+        assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", 
+            "valid annotation");
+    });
+
+    QUnit.test("BookKit.Annotation: add annotation from cfi string", function(assert) {
+        var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)";
+        var annotation = BookKit.Annotation.addAnnotation(cfistring, {});
+        assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)",
+            "valid annotation");
+        assert.ok($.inArray(annotation, BookKit.Annotations), "added");
+    });
+
+    QUnit.test("BookKit.Annotation: add annotation from cfi object", function(assert) {
+        var cfistring = "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+        var annotation = BookKit.Annotation.addAnnotation(cfi, {});
+        assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)",
+            "valid annotation");
+        assert.ok($.inArray(annotation, BookKit.Annotations), "added");
+    });
 
   </script>
 </body>

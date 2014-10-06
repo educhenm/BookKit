@@ -105,15 +105,15 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     },
 
     render: function(annotation) {
-        BookKit.Annotations[annotation.get("cfi").cfistring].rects = [];
+        BookKit.Annotations[annotation.cfi.cfistring].rects = [];
 
-        if (annotation.get("bookmark"))
+        if (annotation.options.bookmark)
             this.renderBookmark(annotation);
 
-        if (annotation.get("highlight"))
+        if (annotation.options.highlight)
             this.renderHighlight(annotation);
 
-        if (annotation.get("note"))
+        if (annotation.options.note)
             this.renderNote(annotation);
     },
 
@@ -131,9 +131,9 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     },
 
     renderHighlight: function(annotation) {
-        var cfi = annotation.get("cfi");
-        var style = annotation.get("highlightStyle");
-        var color = annotation.get("highlightColor");
+        var cfi = annotation.cfi;
+        var style = annotation.options.highlightStyle;
+        var color = annotation.options.highlightColor;
         // var canvas_context = this.canvas.getContext('2d');
         var canvas_context = this.canvasContext();
 
@@ -160,9 +160,9 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     },
 
     renderBookmark: function(annotation) {
-        var cfi = annotation.get("cfi");
-        var style = annotation.get("bookmarkStyle");
-        var color = annotation.get("bookmarkColor");
+        var cfi = annotation.cfi;
+        var style = annotation.options.bookmarkStyle;
+        var color = annotation.options.bookmarkColor;
 
         if (style == BookKit.Constants.BKAnnotationStyleIcon) {
             // If we're to show the bookmark, add some content to the
@@ -193,10 +193,10 @@ _.extend(BookKit.Presentation.Annotate.prototype, BookKit.BaseClass.prototype, {
     },
 
     renderNote: function(annotation) {
-        var cfi = annotation.get("cfi");
-        var note = annotation.get("noteText");
-        var style = annotation.get("noteStyle");
-        var color = annotation.get("noteColor");
+        var cfi = annotation.cfi;
+        var note = annotation.options.noteText;
+        var style = annotation.options.noteStyle;
+        var color = annotation.options.noteColor;
 
         if (style == BookKit.Constants.BKAnnotationStyleIcon) {
             // If the annotation spans more than one character, apply it
