@@ -65,7 +65,7 @@
     QUnit.test("BookKit.CFI: parse existing single-node cfi", function(assert) {
       // Test single node CFI
       var cfistring = "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)";
-      var cfi = new BookKit.CFI(cfistring);
+      var cfi = new BookKit.CFI(cfistring).parseAndResolve();
       console.log(cfi);
       console.log(cfi.ranges);
       // Try to do a bit of introspection
@@ -75,7 +75,7 @@
 
     QUnit.test("BookKit.CFI: parse existing multiple node-spanning cfi", function(assert) {
       var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)";
-      var cfi = new BookKit.CFI(cfistring);
+      var cfi = new BookKit.CFI(cfistring).parseAndResolve();
       console.log(cfi);
       // Try to do a bit of introspection
       assert.equal(cfi.ranges.length, 4, "Passed!" );

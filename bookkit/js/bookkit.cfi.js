@@ -33,31 +33,42 @@ var BookKit = BookKit || {};
 // Hold our parsed CFIs
 var _parsed_cfis = BookKit._parsed_cfis = {};
 
+// BookKit.CFI
+// ===========
+// The CFI model disconnects parsing the CFI string from resolving the
+// steps in the DOM, so that BookKit could potentially be passed a list
+// of steps that have already been parsed.
 BookKit.CFI = (function () {
-    var CFI = function(cfistring) {
+    var CFI = function(cfistring, steps, range, ranges) {
         var base = this;
-
-        base.documentStep = "";
 
         // The CFI string
         base.cfistring = cfistring;
 
-        base.steps = null;
-        base.book = null;
-
-        base.contentDocumentItem = undefined,
-        base.contentDocument = undefined,
+        // The parsed CFI 'steps', node indexes, and any associated
+        // ranges, etc.
+        //
+        // If `steps` are given as an argument, we'll assume they're 
+        // valid for the given `cfistring` and we don't need to parse it.
+        base.steps = steps || null;
 
         // The UNSAFE complete range of the CFI.
-        base.range = null,
+        //
+        // If `range` is given as an argument, we'll assume its valid
+        // for the given `cfistring` and we don't need to resolve it if
+        // `ranges` is also given. Both are to be expected from a CFI
+        // object.
+        base.range = range || null,
 
         // The ranges referred to by a ranged CFI. Array to hold 
         // the multiple elements, element fragments selected, safe
         // for operating across elements.
-        base.ranges = null;
-
-        // The node referred to by a non-ranged CFI
-        base.target = null;
+        //
+        // If `ranges` are given as an argument, we'll assume they're 
+        // valid for the given `cfistring` and we don't need to resolve it
+        // if `range` is also given. Both are to be expected from a CFI
+        // object.
+        base.ranges = ranges || null;
 
         // ### Parsing CFIs to node indexes
 
@@ -240,8 +251,8 @@ BookKit.CFI = (function () {
             // Get the root of the current document (and assume it's the
             // content document referred to before the redirection in the
             // CFI.
-            base.contentDocument = document;
-            var immediateParentNode = base.contentDocument.documentElement;
+            var contentDocument = document;
+            var immediateParentNode = contentDocument.documentElement;
 
             // Lop off the redirection step. This should put us in the
             // content document.
@@ -291,7 +302,7 @@ BookKit.CFI = (function () {
             // XXX: handle assertions
             
             // Set the range(s) of the CFI's location. 
-            var range = base.contentDocument.createRange();
+            var range = contentDocument.createRange();
             if (start != null && startOffset != null && 
                     end != null && endOffset != null) {
                 // If we're given a ranged CFI, get its collective,
@@ -327,13 +338,19 @@ BookKit.CFI = (function () {
             return base.ranges;
         };
 
-        // XXX: STOPPED HERE
-        
         // This is the primary method called for parsing this object's CFI
         // string and resolving it within the content document.
+        // 
+        // This is not done automatically in case one wishes to
+        // initialize CFI objects without necessarily parsing and
+        // resolving them immediately.
         base.parseAndResolve = function() {
-            parse();
-            resolve();
+            if (base.steps == null)
+                parse();
+
+            if (base.range == null || base.ranges == null)
+                resolve();
+            
             return base;
         };
 
@@ -353,7 +370,6 @@ BookKit.CFI = (function () {
 
         // Initialization
         base.init = function() {
-            base.parseAndResolve();
         };
 
         // Run initializer
@@ -366,6 +382,11 @@ BookKit.CFI = (function () {
     }
 })();
 
+// This MUST BE SET for CFIs that are generated to be valid.
+// It's the string that corropsonds to the document step of the
+// CFI, i.e. "/6/12!" in "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)"
+BookKit.CFI.documentStep = "";
+
 // A CFI for the current window's selection. 
 // This is intended to be useful for annotating.
 BookKit.CFI.selectionCFI = function() {
@@ -373,10 +394,11 @@ BookKit.CFI.selectionCFI = function() {
     return BookKit.CFI.cfiForRange(range);
 },
 
+// A CFI for the given range object
 BookKit.CFI.cfiForRange = function(range) {
     var contentDocumentCFI = BookKit.CFI.contentCFIForRange(range);
     var cfistring = "epubcfi(" + BookKit.CFI.documentStep + contentDocumentCFI + ")";
-    return new BookKit.CFI(cfistring);
+    return new BookKit.CFI(cfistring).parseAndResolve();
 },
   
 // Utility methods for generating CFI strings. These DO
