@@ -135,6 +135,21 @@
         assert.ok($.inArray(annotation, BookKit.Annotations), "added");
     });
 
+    QUnit.module("Presentation");
+
+    QUnit.test("BookKit.Annotation: create annotation from cfi object", function(assert) {
+        var cfistring = "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+        var annotation = new BookKit.Annotation({cfi: cfi});
+        assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", 
+            "valid annotation");
+    });
+
+    
+    QUnit.module("Behavior");
+
+
+
   </script>
 </body>
 </html>
