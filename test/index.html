@@ -137,7 +137,7 @@
 
     QUnit.module("Presentation");
 
-    QUnit.test("create columned presentation", function(assert) {
+    QUnit.test("create presentation", function(assert) {
         var cfistring = "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)";
         var cfi = new BookKit.CFI(cfistring).parseAndResolve();
         var annotation = new BookKit.Annotation({cfi: cfi});
@@ -146,6 +146,9 @@
     });
 
     
+    QUnit.module("Layer");
+
+
     QUnit.module("Behavior");
 
 

@@ -38,7 +38,7 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
 // The CFI model disconnects parsing the CFI string from resolving the
 // steps in the DOM, so that BookKit could potentially be passed a list
 // of steps that have already been parsed.
-BookKit.CFI = (function () {
+(function () {
     var CFI = function(cfistring, steps, range, ranges) {
         var base = this;
 
@@ -377,191 +377,195 @@ BookKit.CFI = (function () {
 
     };
 
-    return function(cfistring, steps, range, ranges) {
+    BookKit.CFI = function(cfistring, steps, range, ranges) {
         return new CFI(cfistring, steps, range, ranges);
+    };
+    
+    // This MUST BE SET for CFIs that are generated to be valid.
+    // It's the string that corropsonds to the document step of the
+    // CFI, i.e. "/6/12!" in "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)"
+    BookKit.CFI.documentStep = "";
+
+    // A CFI for the current window's selection. 
+    // This is intended to be useful for annotating.
+    BookKit.CFI.selectionCFI = function() {
+        var selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            var range = window.getSelection().getRangeAt(0);
+            return BookKit.CFI.cfiForRange(range);
+        }
+        return;
+    };
+
+    // A CFI for the given range object
+    BookKit.CFI.cfiForRange = function(range) {
+        var contentDocumentCFI = BookKit.CFI.contentCFIForRange(range);
+        var cfistring = "epubcfi(" + BookKit.CFI.documentStep + contentDocumentCFI + ")";
+        return new BookKit.CFI(cfistring).parseAndResolve();
+    };
+
+    // Utility methods for generating CFI strings. These DO
+    // NOT return BookKit.CFI obejcts.
+
+    // Return the content document portion of a CFI for the given range.
+    // It will not include the package location, etc.
+    BookKit.CFI.contentCFIForRange = function(range) {
+        var startSteps = BookKit.CFI.cfiStepsForNode(range.startContainer);
+        var endSteps = BookKit.CFI.cfiStepsForNode(range.endContainer);
+
+        var parentSteps = []
+          _.every(startSteps, function(element, index, list) {
+              // Don't include the final element
+              if ((startSteps[index] == endSteps[index]) && 
+                  (index < startSteps.length - 1) && (index < endSteps.length - 1)) {
+                  parentSteps.push(element);
+              } else {
+                  return false;
+              }
+              return true;
+          });
+
+        var parentCFI = "/" + parentSteps.join("/");
+        var startCFI = "/" + startSteps.join("/") + ":" + range.startOffset;
+        var endCFI = "/" + endSteps.join("/") + ":" + range.endOffset;
+
+        startCFI = startCFI.replace(parentCFI, '');
+        endCFI = endCFI.replace(parentCFI, '');
+
+        var contentDocumentCFI = null
+          if (startCFI != endCFI)
+              contentDocumentCFI = parentCFI + "," + startCFI + "," + endCFI;
+          else
+              contentDocumentCFI = parentCFI + startCFI;
+
+        // This does NOT include the package location for the content
+        // document this cfi references.
+        return contentDocumentCFI;
+    };
+
+    // Return an array of CFI 'steps'—the node indicies within their
+    // parent's children for the given node and its parents.
+    BookKit.CFI.cfiStepsForNode = function(node) {
+        var steps = [];
+        while(node) { 
+            // Filter out all non element or text nodes
+            var numCommentNodes = 0;
+
+            _.each(node.parentNode.childNodes, function(element, index, list) {
+                if (element.nodeType == Node.COMMENT_NODE)
+                    numCommentNodes++;
+            });
+
+            // epubcfi dictates that text nodes are always odd numbered
+            // and element notes are always even numbered. This can be a
+            // problem in WebKit when we start off at, for example,
+            // <p><i>foo</i> bar</p>. WebKit does not offer a text node
+            // before the italic node. 
+            var leadingElementAdjustment = 0;
+            if (node.parentNode.childNodes[0].nodeType == Node.ELEMENT_NODE)
+                leadingElementAdjustment = 1;
+
+            var index = _.indexOf(node.parentNode.childNodes, node) + 1 - 
+              (numCommentNodes * 2) + leadingElementAdjustment;
+
+            if (node.parentNode.nodeType != Node.ELEMENT_NODE)
+                break;
+
+            if (index > 0)
+                steps.push(index);
+            node = node.parentNode;
+        }
+        return steps.reverse();
     }
+
+    // Take a given selection range that may span DOM elements and return 
+    // an array of equivelent ranges that do not.
+    // http://stackoverflow.com/a/12823606
+    BookKit.CFI.getSafeRanges = function(dangerous) {
+        var a = dangerous.commonAncestorContainer;
+
+        // Starts -- Work inward from the start, selecting the largest safe range
+        var s = new Array(0), rs = new Array(0);
+        if (dangerous.startContainer != a)
+            for(var i = dangerous.startContainer; i != a; i = i.parentNode)
+                s.push(i);
+
+        if (0 < s.length) for(var i = 0; i < s.length; i++) {
+            var xs = document.createRange();
+            if (i) {
+                xs.setStartAfter(s[i-1]);
+                xs.setEndAfter(s[i].lastChild);
+            }
+            else {
+                xs.setStart(s[i], dangerous.startOffset);
+                xs.setEndAfter(
+                    (s[i].nodeType == Node.TEXT_NODE)
+                    ? s[i] : s[i].lastChild
+                    );
+            }
+            rs.push(xs);
+        }
+
+        // Ends -- basically the same code reversed
+        var e = new Array(0), re = new Array(0);
+        if (dangerous.endContainer != a)
+            for(var i = dangerous.endContainer; i != a; i = i.parentNode)
+                e.push(i);
+
+        if (0 < e.length) for(var i = 0; i < e.length; i++) {
+            var xe = document.createRange();
+            if (i) {
+                xe.setStartBefore(e[i].firstChild);
+                xe.setEndBefore(e[i-1]);
+            }
+            else {
+                xe.setStartBefore(
+                    (e[i].nodeType == Node.TEXT_NODE)
+                    ? e[i] : e[i].firstChild
+                    );
+                xe.setEnd(e[i], dangerous.endOffset);
+            }
+            re.unshift(xe);
+        }
+
+        // Middle -- the uncaptured middle
+        if ((0 < s.length) && (0 < e.length)) {
+            // create a new range for every individual non-empty node within the middle range, so 
+            var s_node = s[s.length - 1];
+            var e_node = e[e.length - 1];
+
+            var s_index = _.indexOf(a.childNodes, s_node);
+            var e_index = _.indexOf(a.childNodes, e_node);
+            var siblings = _.toArray(a.childNodes).splice(s_index + 1, e_index - s_index - 1);
+
+            // Remove any blank text nodes
+            siblings = _.filter(siblings, function(n) { 
+                return ((n.nodeType != Node.TEXT_NODE) || n.nodeValue.trim()); });
+
+            var rm = [];
+            _.each(siblings, function(m, index, siblings) {
+                // Create a range that encompasses this node.
+                var xm = document.createRange();
+                xm.selectNodeContents(m);
+                rm.push(xm);
+            });
+        }
+        else {
+            return [dangerous];
+        }
+
+        // Concat
+        rs.push(rm);
+        rs = _.flatten(rs);
+        var response = rs.concat(re);    
+
+        // Send to Console
+        return response;
+    };
+
+
 })();
 
-// This MUST BE SET for CFIs that are generated to be valid.
-// It's the string that corropsonds to the document step of the
-// CFI, i.e. "/6/12!" in "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)"
-BookKit.CFI.documentStep = "";
 
-// A CFI for the current window's selection. 
-// This is intended to be useful for annotating.
-BookKit.CFI.selectionCFI = function() {
-    var selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-        var range = window.getSelection().getRangeAt(0);
-        return BookKit.CFI.cfiForRange(range);
-    }
-    return;
-},
-
-// A CFI for the given range object
-BookKit.CFI.cfiForRange = function(range) {
-    var contentDocumentCFI = BookKit.CFI.contentCFIForRange(range);
-    var cfistring = "epubcfi(" + BookKit.CFI.documentStep + contentDocumentCFI + ")";
-    return new BookKit.CFI(cfistring).parseAndResolve();
-},
-  
-// Utility methods for generating CFI strings. These DO
-// NOT return BookKit.CFI obejcts.
-
-// Return the content document portion of a CFI for the given range.
-// It will not include the package location, etc.
-BookKit.CFI.contentCFIForRange = function(range) {
-    var startSteps = BookKit.CFI.cfiStepsForNode(range.startContainer);
-    var endSteps = BookKit.CFI.cfiStepsForNode(range.endContainer);
-
-    var parentSteps = []
-    _.every(startSteps, function(element, index, list) {
-        // Don't include the final element
-        if ((startSteps[index] == endSteps[index]) && 
-            (index < startSteps.length - 1) && (index < endSteps.length - 1)) {
-            parentSteps.push(element);
-        } else {
-            return false;
-        }
-        return true;
-    });
-
-    var parentCFI = "/" + parentSteps.join("/");
-    var startCFI = "/" + startSteps.join("/") + ":" + range.startOffset;
-    var endCFI = "/" + endSteps.join("/") + ":" + range.endOffset;
-
-    startCFI = startCFI.replace(parentCFI, '');
-    endCFI = endCFI.replace(parentCFI, '');
-
-    var contentDocumentCFI = null
-    if (startCFI != endCFI)
-        contentDocumentCFI = parentCFI + "," + startCFI + "," + endCFI;
-    else
-        contentDocumentCFI = parentCFI + startCFI;
-
-    // This does NOT include the package location for the content
-    // document this cfi references.
-    return contentDocumentCFI;
-};
-
-// Return an array of CFI 'steps'—the node indicies within their
-// parent's children for the given node and its parents.
-BookKit.CFI.cfiStepsForNode = function(node) {
-    var steps = [];
-    while(node) { 
-        // Filter out all non element or text nodes
-        var numCommentNodes = 0;
-  
-        _.each(node.parentNode.childNodes, function(element, index, list) {
-            if (element.nodeType == Node.COMMENT_NODE)
-                numCommentNodes++;
-        });
-
-        // epubcfi dictates that text nodes are always odd numbered
-        // and element notes are always even numbered. This can be a
-        // problem in WebKit when we start off at, for example,
-        // <p><i>foo</i> bar</p>. WebKit does not offer a text node
-        // before the italic node. 
-        var leadingElementAdjustment = 0;
-        if (node.parentNode.childNodes[0].nodeType == Node.ELEMENT_NODE)
-            leadingElementAdjustment = 1;
-
-        var index = _.indexOf(node.parentNode.childNodes, node) + 1 - 
-            (numCommentNodes * 2) + leadingElementAdjustment;
-
-        if (node.parentNode.nodeType != Node.ELEMENT_NODE)
-            break;
-
-        if (index > 0)
-            steps.push(index);
-        node = node.parentNode;
-    }
-    return steps.reverse();
-}
-
-// Take a given selection range that may span DOM elements and return 
-// an array of equivelent ranges that do not.
-// http://stackoverflow.com/a/12823606
-BookKit.CFI.getSafeRanges = function(dangerous) {
-    var a = dangerous.commonAncestorContainer;
-
-    // Starts -- Work inward from the start, selecting the largest safe range
-    var s = new Array(0), rs = new Array(0);
-    if (dangerous.startContainer != a)
-        for(var i = dangerous.startContainer; i != a; i = i.parentNode)
-            s.push(i);
-
-    if (0 < s.length) for(var i = 0; i < s.length; i++) {
-        var xs = document.createRange();
-        if (i) {
-            xs.setStartAfter(s[i-1]);
-            xs.setEndAfter(s[i].lastChild);
-        }
-        else {
-            xs.setStart(s[i], dangerous.startOffset);
-            xs.setEndAfter(
-                           (s[i].nodeType == Node.TEXT_NODE)
-                           ? s[i] : s[i].lastChild
-                           );
-        }
-        rs.push(xs);
-    }
-    
-    // Ends -- basically the same code reversed
-    var e = new Array(0), re = new Array(0);
-    if (dangerous.endContainer != a)
-        for(var i = dangerous.endContainer; i != a; i = i.parentNode)
-            e.push(i);
-
-    if (0 < e.length) for(var i = 0; i < e.length; i++) {
-        var xe = document.createRange();
-        if (i) {
-            xe.setStartBefore(e[i].firstChild);
-            xe.setEndBefore(e[i-1]);
-        }
-        else {
-            xe.setStartBefore(
-                              (e[i].nodeType == Node.TEXT_NODE)
-                              ? e[i] : e[i].firstChild
-                              );
-            xe.setEnd(e[i], dangerous.endOffset);
-        }
-        re.unshift(xe);
-    }
-    
-    // Middle -- the uncaptured middle
-    if ((0 < s.length) && (0 < e.length)) {
-        // create a new range for every individual non-empty node within the middle range, so 
-        var s_node = s[s.length - 1];
-        var e_node = e[e.length - 1];
-
-        var s_index = _.indexOf(a.childNodes, s_node);
-        var e_index = _.indexOf(a.childNodes, e_node);
-        var siblings = _.toArray(a.childNodes).splice(s_index + 1, e_index - s_index - 1);
-
-        // Remove any blank text nodes
-        siblings = _.filter(siblings, function(n) { 
-            return ((n.nodeType != Node.TEXT_NODE) || n.nodeValue.trim()); });
-
-        var rm = [];
-        _.each(siblings, function(m, index, siblings) {
-            // Create a range that encompasses this node.
-            var xm = document.createRange();
-            xm.selectNodeContents(m);
-            rm.push(xm);
-        });
-    }
-    else {
-        return [dangerous];
-    }
-    
-    // Concat
-    rs.push(rm);
-    rs = _.flatten(rs);
-    var response = rs.concat(re);    
-    
-    // Send to Console
-    return response;
-};
 
 

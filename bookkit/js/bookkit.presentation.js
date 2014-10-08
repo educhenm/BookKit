@@ -51,18 +51,17 @@ var BookKit = BookKit || {};
 // previous and next columns) and highlighting (creating a new
 // annotation for a selection).
 
+(function () {
 
-
-// ## Presentation
-//
-// The base presentation. Other presentations can inherit from this
-// presentaiton with:
-//
-//    base.__proto__ = BookKit.Presentation()
-//    
-// This is a continuous vertical presentation that does not divide the
-// content into columns.
-BookKit.Presentation = (function () {
+    // ## Presentation
+    //
+    // The base presentation. Other presentations can inherit from this
+    // presentaiton with:
+    //
+    //    base.__proto__ = BookKit.Presentation()
+    //    
+    // This is a continuous vertical presentation that does not divide the
+    // content into columns.
     var Presentation = function(options) {
         var base = this;
 
@@ -236,18 +235,16 @@ BookKit.Presentation = (function () {
         base.init();
     };
 
-    return function(options) {
+    BookKit.Presentation = function(options) {
         return new Presentation(options);
     };
-})();
 
-// ## ColumnedPresentation
-//
-// A presentation that divides the content into CSS3 columns.
-// ## ColumnedPresentation
-//
-// A presentation that divides the content into CSS3 columns.
-BookKit.ColumnedPresentation = (function () {
+    // ## ColumnedPresentation
+    //
+    // A presentation that divides the content into CSS3 columns.
+    // ## ColumnedPresentation
+    //
+    // A presentation that divides the content into CSS3 columns.
     var ColumnedPresentation = function(options) {
         // basic presentation inheritance
         var base = this;
@@ -421,9 +418,10 @@ BookKit.ColumnedPresentation = (function () {
         base.init();
     };
 
-    return function(options) {
+    BookKit.ColumnedPresentation = function(options) {
         return new ColumnedPresentation(options);
     };
+
 })();
 
 

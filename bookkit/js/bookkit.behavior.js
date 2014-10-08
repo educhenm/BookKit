@@ -31,11 +31,12 @@
 var BookKit = BookKit || {};
 BookKit.Behavior = BookKit.Behavior || {};
 
-// BookKit Navigation Behavior
-// ===========================
-// Set up a "page" using columns, scroll to a specific "page" offset
-// (optionally), and configure navigation elements.
-BookKit.Behavior.Navigate = (function () {
+(function () {
+
+    // BookKit Navigation Behavior
+    // ===========================
+    // Set up a "page" using columns, scroll to a specific "page" offset
+    // (optionally), and configure navigation elements.
     var Navigate = function(options) {
         var base = this;
         
@@ -123,17 +124,15 @@ BookKit.Behavior.Navigate = (function () {
         base.init();
     };
 
-    return function(options) {
+    BookKit.Behavior.Navigate = function(options) {
         return new Navigate(options);
     };
-})();
         
 
-// BookKit Highlight Immediately Behavior
-// ====================
-// This is a behavior for highlighting immediately upon a selection,
-// iBooks-style.
-BookKit.Behavior.HighlightImmediately = (function () {
+    // BookKit Highlight Immediately Behavior
+    // ====================
+    // This is a behavior for highlighting immediately upon a selection,
+    // iBooks-style.
     var HighlightImmediately = function(options) {
         var base = this;
 
@@ -169,9 +168,11 @@ BookKit.Behavior.HighlightImmediately = (function () {
         base.init();
     };
 
-    return function(options) {
+    BookKit.Behavior.HighlightImmediately = function(options) {
         return new HighlightImmediately(options);
     };
+
+
 })();
         
 

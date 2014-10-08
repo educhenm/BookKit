@@ -31,12 +31,13 @@
 var BookKit = BookKit || {};
 BookKit.Layer = BookKit.Layer || {};
 
-// Annotation Canvas
-// -----------------
-// The annotation canvas handles the drawing of annotations. Highlights
-// are actually drawn on an HTML5 canvas element (rather than inline in
-// the HTML, potentially complicating our resolution of new CFIs).
-BookKit.Layer.AnnotationCanvass = (function () {
+(function () {
+
+    // Annotation Canvas
+    // -----------------
+    // The annotation canvas handles the drawing of annotations. Highlights
+    // are actually drawn on an HTML5 canvas element (rather than inline in
+    // the HTML, potentially complicating our resolution of new CFIs).
     var AnnotationCanvass = function(options) {
         var base = this;
         
@@ -262,8 +263,10 @@ BookKit.Layer.AnnotationCanvass = (function () {
         base.init();
     };
 
-    return function(options) {
+    BookKit.Layer.AnnotationCanvass = function(options) {
         return new AnnotationCanvass(options);
     };
+
+
 })();
 
