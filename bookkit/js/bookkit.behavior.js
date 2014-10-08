@@ -28,112 +28,152 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-BookKit.Behaviors = {};
+var BookKit = BookKit || {};
+BookKit.Behavior = BookKit.Behavior || {};
 
 // BookKit Navigation Behavior
 // ===========================
 // Set up a "page" using columns, scroll to a specific "page" offset
 // (optionally), and configure navigation elements.
-var Navigate = BookKit.Behaviors.Navigate = function(attributes) {
-    BookKit.BaseClass.apply(this, arguments);
-};
-_.extend(BookKit.Behaviors.Navigate.prototype, BookKit.BaseClass.prototype, {
-    defaults: {
-        horizontal: true,
-    },
-    
-    initialize: function() {
-        this.$el = $(BookKit.Config.Presentation.presentationElement);
+BookKit.Behavior.Navigate = (function () {
+    var Navigate = function(options) {
+        var base = this;
+        
+        var defaults = {
+            // Scroll horizontally
+            horizontal: true,
 
-        // Window load offset scrolling
-        $(document).on('presented', function(e) {
-            // WebKit seems to call ready before it applies css3
-            // columns.
-            this.scrollTo(BookKit.Config.Presentation.columnToStart);
-            setTimeout(function() {
-            }.bind(this), 500);
-        }.bind(this));
+            // Number of columns to scroll when moving to next "page"
+            columnsToScroll: 2,
 
-        // Keyboard left/right navigation
-        $(document).keydown(function(e) {
-          if(e.keyCode == 37) {
-              this.previousColumn();
-          } else if(e.keyCode == 39) {
-              this.nextColumn();
-          }
-        }.bind(this));
-        // $(document).on('swipeleft',this.previousColumn);
-        // $(document).on('swiperight',this.nextColumn);
-                    
-        // Keyboard up/down navigation
-        // Swipe left/right navigation
+            // Column to start at
+            columnToStart: 0,
+        };
 
-    },
+        base.options = $.extend({}, defaults, options);
+        
+        base.presentation = undefined;
 
-    nextColumn: function() {
-        var current_column = BookKit.Presentation.currentColumnNumber();
-        var total_columns = BookKit.Presentation.totalColumns();
-        var next_column = current_column + BookKit.Config.Presentation.columnsToScroll;
-        if (next_column < total_columns) {
-            this.scrollTo(next_column, true);
-        }
-    },
-
-    previousColumn: function() {
-        var current_column = BookKit.Presentation.currentColumnNumber();
-        var prev_column = current_column - BookKit.Config.Presentation.columnsToScroll;
-        if (prev_column >= 0) {
-            this.scrollTo(prev_column, true);
-        }
-    },
-
-    scrollTo: function(column, animate) {
-        // Scroll to the appropriate column
-        var offset = column * BookKit.Presentation.actualColumnWidth();
-
-        if (this.get('horizontal')) {
-            if (animate) {
-                $(BookKit.Config.Presentation.presentationElement).animate({scrollLeft: offset}, BookKit.Config.Presentation.animationDuration);
-            } else {
-                this.$el.scrollLeft(offset);
+        base.nextColumn = function() {
+            console.log("base.presentation", base.presentation);
+            var current_column = base.presentation.currentContentPosition();
+            var total_columns = base.presentation.contentDivisions();
+            var next_column = current_column + base.options.columnsToScroll;
+            console.log(current_column, total_columns, next_column);
+            if (next_column < total_columns) {
+                base.scrollTo(next_column, true);
             }
-        } else {
-            this.$el.scrollTop(offset);
-        }
-    },
+        };
 
-});
+        base.previousColumn = function() {
+            var current_column = base.presentation.currentContentPosition();
+            var prev_column = current_column - base.options.columnsToScroll;
+            if (prev_column >= 0) {
+                base.scrollTo(prev_column, true);
+            }
+        };
+
+        base.scrollTo = function(column, animate) {
+            // Scroll to the appropriate column
+            var offset = column * base.presentation.actualContentWidth();
+
+            if (base.options.horizontal) {
+                if (animate) {
+                    base.$el.animate({scrollLeft: offset}, 
+                        base.presentation.options.animationDuration);
+                } else {
+                    base.$el.scrollLeft(offset);
+                }
+            } else {
+                base.$el.scrollTop(offset);
+            }
+        };
+            
+        base.init = function() {
+
+            // Window load offset scrolling
+            $(document).on('presented', function(e) {
+                base.$el = $(base.presentation.options.presentationElement);
+
+                // WebKit seems to call ready before it applies css3
+                // columns.
+                base.scrollTo(base.options.columnToStart);
+                setTimeout(function() {
+                }, 500);
+            });
+
+            // Keyboard left/right navigation
+            $(document).keydown(function(e) {
+              if(e.keyCode == 37) {
+                  console.log("prev");
+                  base.previousColumn();
+              } else if(e.keyCode == 39) {
+                  base.nextColumn();
+              }
+            });
+            // $(document).on('swipeleft',this.previousColumn);
+            // $(document).on('swiperight',this.nextColumn);
+                        
+            // Keyboard up/down navigation
+            // Swipe left/right navigation
+
+        };
+
+        // Run initializer
+        base.init();
+    };
+
+    return function(options) {
+        return new Navigate(options);
+    };
+})();
+        
 
 // BookKit Highlight Immediately Behavior
 // ====================
 // This is a behavior for highlighting immediately upon a selection,
 // iBooks-style.
-var HighlightImmediately = BookKit.Behaviors.HighlightImmediately = function(attributes) {
-    BookKit.BaseClass.apply(this, arguments);
-};
-_.extend(BookKit.Behaviors.HighlightImmediately.prototype, BookKit.BaseClass.prototype, {
-    defaults: {
-        duration: 0,
-    },
+BookKit.Behavior.HighlightImmediately = (function () {
+    var HighlightImmediately = function(options) {
+        var base = this;
 
-    initialize: function() {
-        $(document).on('presented', function() {
-            $('body').on('mouseup', function(e) {
-                var cfi = BookKit.CFI.selectionCFI();
-                // For highlights, make sure we have ranges
-                if (cfi.ranges != undefined) {
-                    window.getSelection().removeAllRanges();
-                    BookKit.Annotation.addAnnotation(cfi, {
+        var defaults = {
+            // Default highlight style
+            style: 'highlight',
+
+            // Default highlight color
+            color: 'blue',
+        };
+
+        base.options = $.extend({}, defaults, options);
+        
+        base.init = function() {
+            $(document).on('presented', function() {
+                $('body').on('mouseup', function(e) {
+                    var cfi = BookKit.CFI.selectionCFI();
+
+                    // For highlights, make sure we have ranges
+                    if (cfi && cfi.ranges != undefined) {
+                        window.getSelection().removeAllRanges();
+                        BookKit.Annotation.addAnnotation(cfi, {
                             highlight: cfi,
-                            highlightStyle: BookKit.Constants.BKAnnotationStyleHighlight,
-                            highlightColor: BookKit.Constants.BKAnnotationColorBlue
+                            highlightStyle: base.options.style,
+                            highlightColor: base.options.color,
                         });
-                }
+                    }
+                });
             });
-        });
-    },
+        };
 
-});
+        // Run initializer
+        base.init();
+    };
+
+    return function(options) {
+        return new HighlightImmediately(options);
+    };
+})();
+        
 
 
 

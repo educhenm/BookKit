@@ -72,7 +72,7 @@ BookKit.Annotation = (function () {
             noteText: "",
         };
 
-        base.options = $.extend({}, defaults, options);
+        base.options = $.extend(true, {}, defaults, options);
 
         // The BookKit.CFI object associated with this annotation. If
         // `options.cfi` is not a BookKit.CFI object, one will be

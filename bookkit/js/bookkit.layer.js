@@ -36,8 +36,8 @@ BookKit.Layer = BookKit.Layer || {};
 // The annotation canvas handles the drawing of annotations. Highlights
 // are actually drawn on an HTML5 canvas element (rather than inline in
 // the HTML, potentially complicating our resolution of new CFIs).
-BookKit.Layer.Annotations = (function () {
-    var Annotations = function(options) {
+BookKit.Layer.AnnotationCanvass = (function () {
+    var AnnotationCanvass = function(options) {
         var base = this;
         
         var defaults = {
@@ -130,9 +130,9 @@ BookKit.Layer.Annotations = (function () {
                 // anchor and style and position it appropriately. 
                 // var canvas_context = this.canvas.getContext('2d');
                 var canvas_context = canvasContext();
-                var columnWidth = base.presentation.actualColumnWidth();
+                var columnWidth = base.presentation.actualContentWidth();
                 var originalRect = cfi.ranges[0].getClientRects()[0];
-                var columnNumber = base.presentation.columnNumberForPosition(originalRect.left);
+                var columnNumber = base.presentation.currentContentPosition(originalRect.left);
                 var left = columnWidth * columnNumber + base.options.padding;
                 var rect = {
                     left: left, 
@@ -165,9 +165,9 @@ BookKit.Layer.Annotations = (function () {
                 
                 // var canvas_context = this.canvas.getContext('2d');
                 var canvas_context = canvasContext();
-                var columnWidth = base.presentation.actualColumnWidth();
+                var columnWidth = base.presentation.actualContentWidth();
                 var originalRect = cfi.ranges[0].getClientRects()[0];
-                var columnNumber = base.presentation.columnNumberForPosition(originalRect.left);
+                var columnNumber = base.presentation.currentContentPosition(originalRect.left);
                 var left = columnWidth * columnNumber + base.options.padding;
                 var rect = {
                     left: left, 
@@ -222,11 +222,10 @@ BookKit.Layer.Annotations = (function () {
         // Initialization
         base.init = function() {
             $(document).on('presented', function() {
-                console.log(base.presentation);
                 base.$el = $(base.presentation.options.presentationElement);
 
                 base.width = base.presentation.width();
-                base.height = base.presentation.viewportHeight();
+                base.height = base.presentation.height();
 
                 base.$el = $(base.presentation.options.presentationElement);
 
@@ -264,7 +263,7 @@ BookKit.Layer.Annotations = (function () {
     };
 
     return function(options) {
-        return new Annotations(options);
+        return new AnnotationCanvass(options);
     };
 })();
 

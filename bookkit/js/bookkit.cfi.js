@@ -377,8 +377,8 @@ BookKit.CFI = (function () {
 
     };
 
-    return function(cfistring) {
-        return new CFI(cfistring);
+    return function(cfistring, steps, range, ranges) {
+        return new CFI(cfistring, steps, range, ranges);
     }
 })();
 
@@ -390,8 +390,12 @@ BookKit.CFI.documentStep = "";
 // A CFI for the current window's selection. 
 // This is intended to be useful for annotating.
 BookKit.CFI.selectionCFI = function() {
-    var range =window.getSelection().getRangeAt(0);
-    return BookKit.CFI.cfiForRange(range);
+    var selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        var range = window.getSelection().getRangeAt(0);
+        return BookKit.CFI.cfiForRange(range);
+    }
+    return;
 },
 
 // A CFI for the given range object
