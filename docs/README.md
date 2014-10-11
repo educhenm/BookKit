@@ -80,6 +80,23 @@ If `steps` is not null, parsing will be skipped.
 
 If `range` and `ranges` are not null, resolving will be skipped.
 
+#### `intersects(anotherCfi)`
+
+Does the CFI object intersect with another CFI? Returns `true` or `false`.
+
+#### `rects()`
+
+Get rects for the CFI's ranges. Note: this may be subject to change if the content layout changes.
+
+#### `containsPoint(x, y)`
+
+Does this CFI's rects contain the given `x`, `y` coordinates? Returns `true` or `false`. This function should be useful for testing whether a particular CFI has been interacted with.
+
+#### `select()`
+
+Make this CFI the active window selection.
+
+        
 BookKit.Annotation
 ------------------
 

@@ -39,14 +39,22 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
 // steps in the DOM, so that BookKit could potentially be passed a list
 // of steps that have already been parsed.
 (function () {
-    var CFI = function(cfistring, steps, range, ranges) {
+    BookKit.CFI = function(cfistring, steps, range, ranges) {
         var base = this;
 
         // The CFI string
         base.cfistring = cfistring;
 
         // The parsed CFI 'steps', node indexes, and any associated
-        // ranges, etc.
+        // ranges, etc. An array of three arrays: parent steps, start
+        // steps, and end steps.
+        //
+        // Step objects contain: 
+        //    * `index`: The node index within its parent
+        //    * `assertion`: An assertion made in the CFI step
+        //    * `offset`: Any offset within the selected node
+        //    * `redirection`: boolean whether or not the step is a
+        //      redirection.
         //
         // If `steps` are given as an argument, we'll assume they're 
         // valid for the given `cfistring` and we don't need to parse it.
@@ -132,7 +140,7 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
                     return;
 
                 var step = {
-                    step: -1,
+                    index: -1,
                     assertion: null,
                     offset: -1,
                     redirection: false,
@@ -153,7 +161,7 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
                 if (offsetLocation > 0)
                     step.offset = parseInt(stepString.substring(offsetLocation+1));
 
-                step.step = parseInt(stepString);
+                step.index = parseInt(stepString);
                 steps.push(step);
             });
 
@@ -172,7 +180,7 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
             if (cfistring.indexOf("epubcfi(") != 0)
                 return;
 
-            cfistring = cfistring.substring(8, cfistring.length -1);
+            cfistring = cfistring.substring("epubcfi(".length, cfistring.length - ")".length);
 
             var components = rangeComponents(cfistring);
             if (components.length == 1) {
@@ -203,16 +211,16 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
 
             var leadingElementAdjustment = 0;
 
-            if (stepDict.step % 2 == 0) {
+            if (stepDict.index % 2 == 0) {
                 var children = $(parentNode).children();
                 // This is an element
-                nodeIndex = stepDict.step / 2 - 1;
+                nodeIndex = stepDict.index / 2 - 1;
                 if (nodeIndex <= children.length)
                     node = $(children).eq(nodeIndex)[0];
 
             } else {
                 // This is a text node.
-                nodeIndex = stepDict.step - 1;
+                nodeIndex = stepDict.index - 1;
 
                 // epubcfi dictates that text nodes are always odd numbered
                 // and element notes are always even numbered. This can be a
@@ -241,7 +249,7 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
             
             // Strip out the package spine location manually, and grab the
             // item out of the spine.
-            if (parentSteps[0].step != 6) {
+            if (parentSteps[0].index != 6) {
                 // Then something is dreadfully wrong somewhere
                 console.log("Malformed CFI. Spine should be sixth element of package", 
                     parentSteps[0]);
@@ -327,11 +335,12 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
                     offset = offset - 1;
 
                 if (offset >= 0) {
-                  range.setStart(node, offset);
-                  range.setEnd(node, offset + 1);
+                    // XXX: does this even work?
+                    range.setStart(node, offset);
+                    range.setEnd(node, offset + 1);
 
-                  base.range = range;
-                  base.ranges = [range];
+                    base.range = range;
+                    base.ranges = [range];
                 }
             }
 
@@ -368,19 +377,87 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
             return cfistring.replace(/[\:\/\,]/g, '_').replace(/[\!\(\)\[\]]/g, '');
         };
 
+        // Get rects for the CFI's ranges. Note: this may be subject to
+        // change if the content layout changes.
+        base.rects = function() {
+            var rects = [];
+            $.each(base.ranges, function(index, range) {
+                $.each(range.getClientRects(), function(index, rect) {
+                    rects.push(rect);
+                });
+            });
+            return rects;
+        };
+
+        // Does this CFI contain the given x,y coordinates within its
+        // rects?
+        base.containsPoint = function(x, y) {
+            rects = base.rects();
+            $.each(rects, function(index, rect) {
+                if (x >= rect.left && x <= rect.left + rect.width &&
+                    y >= rect.top && y <= rect.top + rect.height) {
+                    return true;
+                }
+            });
+            return false;
+        };
+
+        // Make this CFI the active selection
+        base.select = function() {
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(base.range);
+            console.log(selection.rangeCount);
+        };
+
+
+        // Does this CFI intersect with another CFI?
+        // Internally this uses the CFI's parsed steps rather than DOM
+        // ranges.
+        base.intersects = function(anotherCfi) {
+            var e2e = base.range.compareBoundaryPoints(Range.END_TO_END, anotherCfi.range);
+            var e2s = base.range.compareBoundaryPoints(Range.END_TO_START, anotherCfi.range);
+            var s2e = base.range.compareBoundaryPoints(Range.START_TO_END, anotherCfi.range);
+            var s2s = base.range.compareBoundaryPoints(Range.START_TO_START, anotherCfi.range);
+
+            //  |------|      (s2s == 0) && (e2e == 0)
+            //                starts-equal ends-equal
+            //      |------|  (s2e >= 0) && (e2s <= 0) 
+            //                starts-after starts-before-end 
+            // |-----|        (s2s <=0 ) && (s2e >= 0)
+            //                starts-before ends-after-start
+            // console.log("  starts-equal ends-equal", (s2s == 0) && (e2e == 0));
+            // console.log("  starts-after starts-before-end", (s2e >= 0) && (e2s <= 0));
+            // console.log("  starts-before ends-after-start", (s2s <=0 ) && (s2e >= 0));
+            if (((s2s == 0) && (e2e == 0)) ||
+                ((s2e >= 0) && (e2s <= 0)) ||
+                ((s2s <= 0 ) && (s2e >= 0)))
+                return true
+
+            return false;
+        };
+
+        // Return a new CFI that is the given CFI merged with this one.
+        base.merge = function(anotherCfi) {
+            if (!base.intersects(anotherCfi)) 
+                return null;
+
+            var e2e = base.range.compareBoundaryPoints(Range.END_TO_END, anotherCfi.range);
+            var e2s = base.range.compareBoundaryPoints(Range.END_TO_START, anotherCfi.range);
+            var s2e = base.range.compareBoundaryPoints(Range.START_TO_END, anotherCfi.range);
+            var s2s = base.range.compareBoundaryPoints(Range.START_TO_START, anotherCfi.range);
+            
+            return null;
+        };
+        
         // Initialization
         base.init = function() {
         };
 
         // Run initializer
         base.init();
-
     };
 
-    BookKit.CFI = function(cfistring, steps, range, ranges) {
-        return new CFI(cfistring, steps, range, ranges);
-    };
-    
     // This MUST BE SET for CFIs that are generated to be valid.
     // It's the string that corropsonds to the document step of the
     // CFI, i.e. "/6/12!" in "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)"
