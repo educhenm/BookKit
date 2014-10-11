@@ -391,15 +391,16 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
 
         // Does this CFI contain the given x,y coordinates within its
         // rects?
-        base.containsPoint = function(x, y) {
+        base.containsPoint = function(x, y, xOffset, yOffset) {
             rects = base.rects();
+            var contains = false;
             $.each(rects, function(index, rect) {
                 if (x >= rect.left && x <= rect.left + rect.width &&
                     y >= rect.top && y <= rect.top + rect.height) {
-                    return true;
+                    contains = true;
                 }
             });
-            return false;
+            return contains;
         };
 
         // Make this CFI the active selection
@@ -409,7 +410,6 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
             selection.addRange(base.range);
             console.log(selection.rangeCount);
         };
-
 
         // Does this CFI intersect with another CFI?
         // Internally this uses the CFI's parsed steps rather than DOM
