@@ -225,7 +225,8 @@ BookKit.Layer = BookKit.Layer || {};
           
         // Initialization
         base.init = function() {
-            $(document).on('presented', function() {
+            $(document).on('presented', function(e, presentation) {
+                base.presentation = presentation;
                 base.$el = $(base.presentation.options.presentationElement);
 
                 base.width = base.presentation.width();
@@ -283,7 +284,8 @@ BookKit.Layer = BookKit.Layer || {};
         // element of the annotation, close it and open its 
 
         base.init = function() {
-            $(document).on('presented', function() {
+            $(document).on('presented', function(e, presentation) {
+                base.presentation = presentation;
                 base.$el = $(base.presentation.options.presentationElement);
 
             });

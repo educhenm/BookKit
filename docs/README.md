@@ -169,6 +169,10 @@ There would usually only ever be one presentation object created for one XHTML d
 
 For example: the default BookKit presentation creates CSS3 columns. A default layer creates a canvas on which annotations are drawn. Default behaviors include navigation (scrolling left and right to previous and next columns) and highlighting (creating a new annotation for a selection).
 
+### Presentation Creation
+
+#### `new BookKit.Presentation(options)`
+
 ### Presentation Objects
 
 #### Options:
@@ -184,8 +188,6 @@ For example: the default BookKit presentation creates CSS3 columns. A default la
    * `layers`: object containing layer instances (with unique names)
 
 Presentations also have functions that provide dimensional calculations for the content. These are intended to be used by both layers and behaviors to locate particular content ranges within the viewport (such as for highlighting or otherwise marking out an annotation).
-
-#### `new BookKit.Presentation(options)`
 
 #### `viewportHeight()`
 
@@ -238,10 +240,6 @@ Return the current content position based on scroll offset.
 #### `rangeForCurrentContentPosition()`
    
 Returns a Javascript range for the top of the current content position.
-
-#### `configureLayers()`
-
-#### `configureBehaviors()`
 
 
 ## BookKit.Layer
