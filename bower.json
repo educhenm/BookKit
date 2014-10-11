@@ -23,6 +23,7 @@
     "docs"
   ],
   "devDependencies": {
-    "qunit": "~1.15.0"
+    "qunit": "~1.15.0",
+    "qunit-composite": "git://github.com/jquery/qunit-composite#~1.0.1"
   }
 }

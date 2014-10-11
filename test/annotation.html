@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" 
+      xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <meta charset="utf-8">
+    <title>BookKit.Annotation Tests</title>
+
+    <link rel="stylesheet" href="../bower_components/qunit/qunit/qunit.css">
+    <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../bower_components/qunit/qunit/qunit.js"></script>
+    
+  </head>
+  <body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+
+    <iframe id="test-content" src="content.html" height="50%" width="100%"></iframe>
+    
+    <script>
+    var $$ = jQuery.noConflict(true);
+    var $ = jQuery = null;
+
+    $$('#test-content').on('load', function() {
+        // Get the jQuery Object from the original code
+        var frame = window.frames[0];
+        $ = frame.jQuery;
+        BookKit = frame.BookKit;
+
+        // Set up the document portion of CFIs 
+        BookKit.CFI.documentStep = "/6/12!";
+    
+        QUnit.module("Annotations");
+
+        QUnit.test("create annotation from cfi string", function(assert) {
+            var annotation = new BookKit.Annotation({cfi: "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)"});
+            assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)", 
+                "valid annotation");
+        });
+        
+        QUnit.test("create annotation from cfi object", function(assert) {
+            var cfistring = "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)";
+            var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+            var annotation = new BookKit.Annotation({cfi: cfi});
+            assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", 
+                "valid annotation");
+        });
+
+        QUnit.test("add annotation from cfi string", function(assert) {
+            var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)";
+            var annotation = BookKit.Annotation.addAnnotation(cfistring, {});
+            assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)",
+                "valid annotation");
+            assert.ok($.inArray(annotation, BookKit.Annotations), "added");
+        });
+
+        QUnit.test("add annotation from cfi object", function(assert) {
+            var cfistring = "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)";
+            var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+            var annotation = BookKit.Annotation.addAnnotation(cfi, {});
+            assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)",
+                "valid annotation");
+            assert.ok($.inArray(annotation, BookKit.Annotations), "added");
+        });
+
+    });
+
+  </script>
+</body>
+</html>
+
+

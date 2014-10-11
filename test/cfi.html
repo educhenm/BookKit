@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" 
+      xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <meta charset="utf-8">
+    <title>BookKit.CFI Tests</title>
+
+    <link rel="stylesheet" href="../bower_components/qunit/qunit/qunit.css">
+
+    <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../bower_components/qunit/qunit/qunit.js"></script>
+    
+  </head>
+  <body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+
+    <iframe id="test-content" src="content.html" height="50%" width="100%"></iframe>
+    
+    <script>
+    var $$ = jQuery.noConflict(true);
+    var $ = jQuery = null;
+
+    $$('#test-content').on('load', function() {
+        // Get the jQuery Object from the original code
+        var frame = window.frames[0];
+        $ = frame.jQuery;
+        BookKit = frame.BookKit;
+
+        QUnit.module("CFI");
+
+        // Set up the document portion of CFIs 
+        BookKit.CFI.documentStep = "/6/12!";
+    
+        QUnit.test("parse existing single-node cfi", function(assert) {
+            // Test single node CFI
+            var cfistring = "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)";
+            var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+            // Try to do a bit of introspection
+            assert.equal(cfi.steps.length, 3, "parsed");
+            assert.equal(cfi.ranges.length, 1, "resolved");
+        });
+
+        QUnit.test("parse existing multiple node-spanning cfi", function(assert) {
+            var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)";
+            var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+            // Try to do a bit of introspection
+            assert.equal(cfi.steps.length, 3, "parsed");
+            assert.equal(cfi.ranges.length, 4, "resolved");
+        });
+        
+        QUnit.test("create single-node cfi for range", function(assert) {
+            // "Introibo ad altare Dei"
+            var singleNode = $($($('.test-content').contents()[3]).contents()[1]).contents()[0];
+            var range = document.createRange();
+            range.setStart(singleNode, 0);
+            range.setEnd(singleNode, 22);
+            var cfi = BookKit.CFI.cfiForRange(range);
+            assert.equal(cfi.cfistring, "epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)", "valid cfi");
+        });
+
+        QUnit.test("create multiple node-spanning cfi for range", function(assert) {
+            // "fearful jesuit! Solemnly"
+            var startNode = $($('.test-content').contents()[7]).contents()[0];
+            var endNode = $($('.test-content').contents()[9]).contents()[0];
+            var range = document.createRange();
+            range.setStart(startNode, 31);
+            range.setEnd(endNode, 8);
+            var cfi = BookKit.CFI.cfiForRange(range);
+            assert.equal(cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", "valid cfi");
+        });
+
+        QUnit.test("cfi intersection", function(assert) {
+            // Element-spanning CFI
+            // "he peered down... Solemnly"
+            var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/10/1:8)";
+            var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+
+            // Element-spanning CFI, sharing end container with start container
+            var otherCfistring = "epubcfi(/6/12!/4/2,/4/1:2,/6/1:31)";
+            var otherCfi = new BookKit.CFI(otherCfistring).parseAndResolve();
+
+            // CFI inside original CFI without sharing start of end containers
+            var insideCfistring = "epubcfi(/6/12!/4/2/8,/1:2,/1:9)";
+            var insideCfi = new BookKit.CFI(insideCfistring).parseAndResolve();
+
+            // CFI outside the original but sharing the same container. Should not intersect.
+            var outsideCfistring = "epubcfi(/6/12!/4/2/6,/1:0,/1:6)";
+            var outsideCfi = new BookKit.CFI(outsideCfistring).parseAndResolve();
+
+            assert.ok(cfi.intersects(cfi), "equal CFIs intersect");
+
+            assert.ok(cfi.intersects(otherCfi), "mutually spanning CFIs intersect");
+            assert.ok(otherCfi.intersects(cfi), "inverse mutually spanning CFIs intersect");
+
+            assert.ok(cfi.intersects(insideCfi), "fully contained CFI intersects");
+            assert.ok(insideCfi.intersects(cfi), "fully contained CFI intersects");
+
+            assert.ok(!cfi.intersects(outsideCfi), "non-intersecting CFI does not intersect");
+            assert.ok(!outsideCfi.intersects(cfi), "non-intersecting CFI does not intersect");
+
+        });
+
+        QUnit.test("merge cfis", function(assert) {
+            // Element-spanning CFI
+            // "he peered down... Solemnly"
+            var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/10/1:8)";
+            var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+
+            // Element-spanning CFI, sharing end container with start container
+            var otherCfistring = "epubcfi(/6/12!/4/2,/4/1:2,/6/1:31)";
+            var otherCfi = new BookKit.CFI(otherCfistring).parseAndResolve();
+
+            // CFI inside original CFI without sharing start of end containers
+            var insideCfistring = "epubcfi(/6/12!/4/2/8,/1:2,/1:9)";
+            var insideCfi = new BookKit.CFI(insideCfistring).parseAndResolve();
+
+            // CFI outside the original but sharing the same container. Should not intersect.
+            var outsideCfistring = "epubcfi(/6/12!/4/2/6,/1:0,/1:6)";
+            var outsideCfi = new BookKit.CFI(outsideCfistring).parseAndResolve();
+
+            assert.ok(true, "mutually spanning CFIs merged");
+            assert.ok(true, "fully contained CFI merged");
+            assert.ok(true, "non-intersecting CFI not merged");
+
+        });
+
+        QUnit.test("select cfi", function(assert) {
+            var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/10/1:8)";
+            var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+            cfi.select();
+
+            // Remember, we're in an iframe.
+            var selection = frame.getSelection();
+            var range = selection.getRangeAt(0);
+
+            assert.equal(range.startContainer, cfi.range.startContainer, "start container selected");
+            assert.equal(range.endContainer, cfi.range.endContainer, "end container selected");
+            assert.equal(range.startOffset, cfi.range.startOffset, "start offset selected");
+            assert.equal(range.endOffset, cfi.range.endOffset, "end offset selected");
+        });
+        
+    });
+
+  </script>
+</body>
+</html>
+
+
