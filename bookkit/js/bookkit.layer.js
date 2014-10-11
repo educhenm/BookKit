@@ -38,7 +38,10 @@ BookKit.Layer = BookKit.Layer || {};
     // The annotation canvas handles the drawing of annotations. Highlights
     // are actually drawn on an HTML5 canvas element (rather than inline in
     // the HTML, potentially complicating our resolution of new CFIs).
-    var AnnotationCanvass = function(options) {
+    //
+    // WebKit-only because of the use of `webkit-canvas()` in
+    // background.
+    BookKit.Layer.AnnotationCanvass = function(options) {
         var base = this;
         
         var defaults = {
@@ -263,10 +266,44 @@ BookKit.Layer = BookKit.Layer || {};
         base.init();
     };
 
-    BookKit.Layer.AnnotationCanvass = function(options) {
-        return new AnnotationCanvass(options);
-    };
+    // Annotations HTML
+    // -----------------
+    // Create annotations using HTML within the DOM rather than with a
+    // canvas (above).
+    BookKit.Layer.HTMLAnnotations= function(options) {
+        var base = this;
+        
+        var defaults = {
 
+        };
+
+        base.options = $.extend({}, defaults, options);
+
+        // When an annotation with a note is tapped, find the bottom
+        // element of the annotation, close it and open its 
+
+        base.init = function() {
+            $(document).on('presented', function() {
+                base.$el = $(base.presentation.options.presentationElement);
+
+            });
+
+
+            $(document).on('addedAnnotation', function(e, annotation) {
+
+            });
+
+            $(document).on('removedAnnotation', function(e, annotation) {
+
+            });
+            
+        };
+
+        // Run initializer
+        base.init();
+
+    };
+ 
 
 })();
 

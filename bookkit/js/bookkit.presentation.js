@@ -62,7 +62,7 @@ var BookKit = BookKit || {};
     //    
     // This is a continuous vertical presentation that does not divide the
     // content into columns.
-    var Presentation = function(options) {
+    BookKit.Presentation = function(options) {
         var base = this;
 
         var defaults = {
@@ -235,20 +235,16 @@ var BookKit = BookKit || {};
         base.init();
     };
 
-    BookKit.Presentation = function(options) {
-        return new Presentation(options);
-    };
-
     // ## ColumnedPresentation
     //
     // A presentation that divides the content into CSS3 columns.
     // ## ColumnedPresentation
     //
     // A presentation that divides the content into CSS3 columns.
-    var ColumnedPresentation = function(options) {
+    BookKit.ColumnedPresentation = function(options) {
         // basic presentation inheritance
         var base = this;
-        var _super = BookKit.Presentation(options);
+        var _super = new BookKit.Presentation(options);
         base = $.extend(true, _super, base);
 
         var defaults = {
@@ -416,10 +412,6 @@ var BookKit = BookKit || {};
 
         // Run initializer
         base.init();
-    };
-
-    BookKit.ColumnedPresentation = function(options) {
-        return new ColumnedPresentation(options);
     };
 
 })();

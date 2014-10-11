@@ -37,7 +37,7 @@ BookKit.Behavior = BookKit.Behavior || {};
     // ===========================
     // Set up a "page" using columns, scroll to a specific "page" offset
     // (optionally), and configure navigation elements.
-    var Navigate = function(options) {
+    BookKit.Behavior.Navigate = function(options) {
         var base = this;
         
         var defaults = {
@@ -124,16 +124,11 @@ BookKit.Behavior = BookKit.Behavior || {};
         base.init();
     };
 
-    BookKit.Behavior.Navigate = function(options) {
-        return new Navigate(options);
-    };
-        
-
     // BookKit Highlight Immediately Behavior
     // ====================
     // This is a behavior for highlighting immediately upon a selection,
     // iBooks-style.
-    var HighlightImmediately = function(options) {
+    BookKit.Behavior.HighlightImmediately = function(options) {
         var base = this;
 
         var defaults = {
@@ -148,11 +143,12 @@ BookKit.Behavior = BookKit.Behavior || {};
         
         base.init = function() {
             $(document).on('presented', function() {
-                $('body').on('mouseup', function(e) {
+                $(base.presentation.options.presentationElement).on('mouseup', function(e) {
                     var cfi = BookKit.CFI.selectionCFI();
 
                     // For highlights, make sure we have ranges
                     if (cfi && cfi.ranges != undefined) {
+                        console.log(cfi.cfistring);
                         window.getSelection().removeAllRanges();
                         BookKit.Annotation.addAnnotation(cfi, {
                             highlight: cfi,
@@ -168,10 +164,36 @@ BookKit.Behavior = BookKit.Behavior || {};
         base.init();
     };
 
-    BookKit.Behavior.HighlightImmediately = function(options) {
-        return new HighlightImmediately(options);
-    };
+    // Note Splitter
+    // -----------------
+    // Splits the content at the bottom of an annotation to reveal a
+    // note.
+    BookKit.Behavior.NoteSplitter = function(options) {
+        var base = this;
+        
+        var defaults = {
 
+        };
+
+        base.options = $.extend({}, defaults, options);
+
+        // When an annotation with a note is tapped, find the bottom
+        // element of the annotation, close it and open its 
+
+        base.init = function() {
+            $(document).on('presented', function() {
+                $(base.presentation.options.presentationElement).on('click', function(e) {
+                    console.log("clicked");
+
+                });
+            });
+        };
+
+        // Run initializer
+        base.init();
+
+    };
+    
 
 })();
         
