@@ -19,9 +19,11 @@ BookKit is divided logically into five components:
 
 EPUB CFIs are Content Fragment Identifiers. They reference a particular location within an ePub file (a container which includes many XHTML files ordered by a content manifest). The can span XHTML elements, XHTML files, partial elements, etc.
 
+Beyond simply locating a particular location or fragment in an EPUB file, CFIs, once resolved, can be used to locate that content both in the DOM and on the screen.
+
 ### Annotation
 
-Annotations are built on CFIs. In practice they can be bookmarks (CFIs without any range), highlights (CFIs that contain a range, with additional properties such as the style/color of the highlight), or notes (CFIs either with or without range, with or without highlighting, that have some additional user-specified text associated).
+Annotations are built on CFIs and add the context in which a CFI may have been created by a user. In practice they can be bookmarks (CFIs without any range), highlights (CFIs that contain a range, with additional properties such as the style/color of the highlight), or notes (CFIs either with or without range, with or without highlighting, that have some additional user-specified text associated).
 
 ### Presentation
 
@@ -67,6 +69,8 @@ If `range` and `ranges` are given, they are assumed to be valid for the `cfistri
 
 CFI objects have the following properties:
 
+#### Properties 
+
 * `cfistring`: The CFI string, i.e. `epubcfi(/6/12!/4/2,/6/1:8,/8/1:9)`
 * `steps`: The parsed CFI 'steps', node indexes, and any associated ranges, etc.
 * `range`: The UNSAFE complete range of the CFI.
@@ -97,13 +101,63 @@ Does this CFI's rects contain the given `x`, `y` coordinates? Returns `true` or 
 Make this CFI the active window selection.
 
         
-BookKit.Annotation
-------------------
+## BookKit.Annotation
+
+`BookKit.Annotation` represents CFIs created by users to annotate an EPUB with bookmarks, highlights/underlines, or text notes. They are the marginalia of digital reading. 
 
 
+### Annotation Creation
 
-BookKit Presentation
---------------------
+BookKit keeps a global array of annotations that exist for the current XHTML document, `BookKit.Annotations`. When using the `addAnnotation()` and `removeAnnotation()` functions to create annotation objects the annotations are added to this array. In addition both functions also trigger events, `addedAnnotation` and `removedAnnotation` respectively.
+
+#### `BookKit.Annotation.addAnnotation(cfiOrString, annotationProps)`
+
+Returns a new `BookKit.Annotation` object for the given `BookKit.CFI` object or CFI string with the given properties (see below). 
+
+This function also adds the annotation to the global `BookKit.Annotaitons` array and triggers the event `addedAnnotation`.
+
+#### `new BookKit.Annotations(options)`
+
+Return a new `BookKit.Annotation` object with the given properties (see below). Annotations created in this way do not get added to the global `BookKit.Annotations` array and the `addedAnnotation` event is not triggered.
+
+### Annotation Removal
+
+#### `BookKit.Annotation.removeAnnotation(annotationOrCFI)`
+
+Removes the given `BookKit.Annotation` object or annotation associated with the given `BookKit.CFI` or CFI string from the global `BookKit.Annotations` array and triggres the global event `removedAnnotation`.
+
+
+### Annotation Objects
+
+#### Options 
+ 
+* `cfi`: A `BookKit.CFI` object or a string EPUB CFI for this annotation.
+
+Bookmark annotations — annotations that mark a location, and nothing else. They're composed from CFIs that have no range.
+
+* `bookmark`: Boolean, is this annotation a bookmark?
+* `bookmarkStyle`:
+* `bookmarkColor`:
+
+Highlight/underline annotations — annotations that mark a location and particular content at that location. They're composed from CFIs with a range.
+
+* `highlight`: Boolean, is this annotation a highlight?
+* `highlightStyle`:
+* `highlightColor`: 
+
+Note annotations — annotations that mark a location, with or without marking particular content at that location, and include some user-generated textual content. 
+
+* `note`: Boolean, is this annotation a note?
+* `noteStyle`: 
+* `noteColor`: 
+* `noteText`: 
+
+#### Properties
+
+* `cfi`: The `BookKit.CFI` object for this annotation. The `cfi` option can be either a string or an object. This property will always reliably hold the `BookKit.CFI` object.
+
+
+## BookKit Presentation
 
 Presentation is the basis for the BookKit UI. It is a modular approach that seperates the UI into three logical component types:
 
@@ -115,9 +169,9 @@ There would usually only ever be one presentation object created for one XHTML d
 
 For example: the default BookKit presentation creates CSS3 columns. A default layer creates a canvas on which annotations are drawn. Default behaviors include navigation (scrolling left and right to previous and next columns) and highlighting (creating a new annotation for a selection).
 
-## Presentation Objects
+### Presentation Objects
 
-### Options:
+#### Options:
 
    * `viewportElement`: the viewport element (usually `window)
    * `presentationElement`: the element that will be presented
@@ -188,4 +242,10 @@ Returns a Javascript range for the top of the current content position.
 #### `configureLayers()`
 
 #### `configureBehaviors()`
+
+
+## BookKit.Layer
+
+
+## BookKit.Behavior
 

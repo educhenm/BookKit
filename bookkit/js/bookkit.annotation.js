@@ -79,16 +79,6 @@ BookKit.Annotation = (function () {
         // created from it.
         base.cfi = undefined;
 
-        base.pixelRects = function() {
-            var rects = [];
-            $.each(base.cfi.ranges, function(index, range) {
-                $.each(range.getClientRects(), function(index, rect) {
-                    rects.push(rect);
-                });
-            });
-            return rects;
-        },
-        
         // Initialization
         base.init = function() {
             if ((typeof base.options.cfi == 'string') || 

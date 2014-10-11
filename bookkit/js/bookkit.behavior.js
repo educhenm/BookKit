@@ -93,7 +93,8 @@ BookKit.Behavior = BookKit.Behavior || {};
         base.init = function() {
 
             // Window load offset scrolling
-            $(document).on('presented', function(e) {
+            $(document).on('presented', function(e, presentation) {
+                base.presentation = presentation;
                 base.$el = $(base.presentation.options.presentationElement);
 
                 // WebKit seems to call ready before it applies css3
@@ -142,8 +143,11 @@ BookKit.Behavior = BookKit.Behavior || {};
         base.options = $.extend({}, defaults, options);
         
         base.init = function() {
-            $(document).on('presented', function() {
-                $(base.presentation.options.presentationElement).on('mouseup', function(e) {
+            $(document).on('presented', function(e, presentation) {
+                base.presentation = presentation;
+                base.$el = $(base.presentation.options.presentationElement);
+            
+                base.$el.on('mouseup', function(e) {
                     var cfi = BookKit.CFI.selectionCFI();
 
                     // For highlights, make sure we have ranges

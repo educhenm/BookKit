@@ -181,27 +181,8 @@ var BookKit = BookKit || {};
             return range;
         };
 
-        // ## Initialization
-
-        // Set `presentation` on each layer to this object.
-        base.configureLayers = function() {
-            $.each(base.options.layers, function(index, layer) {
-                layer.presentation = base;
-            });
-        };
-
-        // Set `presentation` on each behavior to this object.
-        base.configureBehaviors = function() {
-            $.each(base.options.behaviors, function(index, behavior) {
-                behavior.presentation = base;
-            });
-        };
-
         // Initialization
         base.init = function() {
-            base.configureLayers(base);
-            base.configureBehaviors(base);
-
             $(document).on('ready', function() {
                 // Use the font loader for FontAwesome, which we use for
                 // annotations. We don't need to do any special success/error
@@ -225,7 +206,7 @@ var BookKit = BookKit || {};
                 $el.css('height', base.innerHeight());
                 $el.css('width', base.innerWidth());
 
-                $(document).trigger('presented');
+                $(document).trigger('presented', [base]);
             }.bind(base));
 
             $(window).resize();
@@ -379,15 +360,13 @@ var BookKit = BookKit || {};
             $el.css('-webkit-column-rule',  '1px outset #eeeeee');
             $el.css('width', base.innerWidth());
 
-            $(document).trigger('presented');
+            $(document).trigger('presented', [base]);
         };
 
         // ## Initialization
 
         // Initialization
         base.init = function() {
-            base.configureLayers();
-            base.configureBehaviors();
 
             $(document).on('ready', function() {
                 // Use the font loader for FontAwesome, which we use for
