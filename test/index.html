@@ -101,6 +101,76 @@
         var cfi = BookKit.CFI.cfiForRange(range);
         assert.equal(cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", "valid cfi");
     });
+
+    QUnit.test("cfi intersection", function(assert) {
+        // Element-spanning CFI
+        // "he peered down... Solemnly"
+        var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/10/1:8)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+
+        // Element-spanning CFI, sharing end container with start container
+        var otherCfistring = "epubcfi(/6/12!/4/2,/4/1:2,/6/1:31)";
+        var otherCfi = new BookKit.CFI(otherCfistring).parseAndResolve();
+
+        // CFI inside original CFI without sharing start of end containers
+        var insideCfistring = "epubcfi(/6/12!/4/2/8,/1:2,/1:9)";
+        var insideCfi = new BookKit.CFI(insideCfistring).parseAndResolve();
+
+        // CFI outside the original but sharing the same container. Should not intersect.
+        var outsideCfistring = "epubcfi(/6/12!/4/2/6,/1:0,/1:6)";
+        var outsideCfi = new BookKit.CFI(outsideCfistring).parseAndResolve();
+
+        assert.ok(cfi.intersects(cfi), "equal CFIs intersect");
+
+        assert.ok(cfi.intersects(otherCfi), "mutually spanning CFIs intersect");
+        assert.ok(otherCfi.intersects(cfi), "inverse mutually spanning CFIs intersect");
+
+        assert.ok(cfi.intersects(insideCfi), "fully contained CFI intersects");
+        assert.ok(insideCfi.intersects(cfi), "fully contained CFI intersects");
+
+        assert.ok(!cfi.intersects(outsideCfi), "non-intersecting CFI does not intersect");
+        assert.ok(!outsideCfi.intersects(cfi), "non-intersecting CFI does not intersect");
+
+    });
+
+    QUnit.test("merge cfis", function(assert) {
+        // Element-spanning CFI
+        // "he peered down... Solemnly"
+        var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/10/1:8)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+
+        // Element-spanning CFI, sharing end container with start container
+        var otherCfistring = "epubcfi(/6/12!/4/2,/4/1:2,/6/1:31)";
+        var otherCfi = new BookKit.CFI(otherCfistring).parseAndResolve();
+
+        // CFI inside original CFI without sharing start of end containers
+        var insideCfistring = "epubcfi(/6/12!/4/2/8,/1:2,/1:9)";
+        var insideCfi = new BookKit.CFI(insideCfistring).parseAndResolve();
+
+        // CFI outside the original but sharing the same container. Should not intersect.
+        var outsideCfistring = "epubcfi(/6/12!/4/2/6,/1:0,/1:6)";
+        var outsideCfi = new BookKit.CFI(outsideCfistring).parseAndResolve();
+
+        assert.ok(true, "mutually spanning CFIs merged");
+        assert.ok(true, "fully contained CFI merged");
+        assert.ok(true, "non-intersecting CFI not merged");
+
+    });
+
+    QUnit.test("select cfi", function(assert) {
+        var cfistring = "epubcfi(/6/12!/4/2,/6/1:8,/10/1:8)";
+        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
+        cfi.select();
+
+        // This doesn't work because the selected nodes aren't visible. Make them so.
+        var selection = window.getSelection();
+        var range = selection.getRangeAt(0);
+        assert.equal(range.startContainer, cfi.range.startContainer, "start container selected");
+        assert.equal(range.endContainer, cfi.range.endContainer, "end container selected");
+        assert.equal(range.startOffset, cfi.range.startOffset, "start offset selected");
+        assert.equal(range.endOffset, cfi.range.endOffset, "end offset selected");
+    });
+    
     
     QUnit.module("Annotations");
 
@@ -137,17 +207,7 @@
 
     QUnit.module("Presentation");
 
-    QUnit.test("create presentation", function(assert) {
-        var cfistring = "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)";
-        var cfi = new BookKit.CFI(cfistring).parseAndResolve();
-        var annotation = new BookKit.Annotation({cfi: cfi});
-        assert.equal(annotation.cfi.cfistring, "epubcfi(/6/12!/4/2,/8/1:31,/10/1:8)", 
-            "valid annotation");
-    });
-
-    
     QUnit.module("Layer");
-
 
     QUnit.module("Behavior");
 
