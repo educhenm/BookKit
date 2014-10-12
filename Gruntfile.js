@@ -14,6 +14,19 @@ module.exports = function(grunt) {
                 dest: 'dist/js/<%= pkg.name %>.js'
             },
         },
+        bower_concat: {
+            all: {
+                dest: 'dist/js/bower_deps.js',
+                cssDest: 'dist/css/bower_deps.css',
+                exclude: [
+                ],
+                dependencies: {
+                },
+                bowerOptions: {
+                    relative: false
+                }
+            }
+        },
         uglify: {
             options: {
                 // the banner is inserted at the top of the output
@@ -43,6 +56,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-bower-concat');
 
     grunt.registerTask('test', ['qunit']);
     grunt.registerTask('default', ['clean', 'copy', 'concat', 'uglify']);

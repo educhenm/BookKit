@@ -205,6 +205,12 @@ BookKit.Layer = BookKit.Layer || {};
           
         // Initialization
         base.init = function() {
+            // Use the font loader for FontAwesome, which we use for
+            // annotations. We don't need to do any special success/error
+            // handling (though we probably should do error handling if the
+            // font fails to load) to get polyfill.
+            // document.fontloader.loadFont({font: '16px FontAwesome'});
+            
             $(document).on('presented', function(e, presentation) {
                 base.presentation = presentation;
                 base.$el = $(base.presentation.options.presentationElement);
