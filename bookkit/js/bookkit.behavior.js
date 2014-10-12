@@ -56,11 +56,9 @@ BookKit.Behavior = BookKit.Behavior || {};
         base.presentation = undefined;
 
         base.nextColumn = function() {
-            console.log("base.presentation", base.presentation);
             var current_column = base.presentation.currentContentPosition();
             var total_columns = base.presentation.contentDivisions();
             var next_column = current_column + base.options.columnsToScroll;
-            console.log(current_column, total_columns, next_column);
             if (next_column < total_columns) {
                 base.scrollTo(next_column, true);
             }
@@ -181,14 +179,136 @@ BookKit.Behavior = BookKit.Behavior || {};
 
         base.options = $.extend({}, defaults, options);
 
-        // When an annotation with a note is tapped, find the bottom
-        // element of the annotation, close it and open its 
+        base.presentation = undefined;
+
+        base.openNote = function(annotation) {
+            // Check to see if the note is already open
+            var existing = $('#-BookKit-Behavior-NoteSplitter-Note-' + annotation.cfi.safeAttr());
+            if ((existing.length) > 0)
+                return;
+
+            // Using the ending range of the annotation, close its
+            // endContainer and add a new DOM element immediately after
+            // containing the note. Then open an identical DOM element
+            // to the endContainer after our new element — IF the end of
+            // the range was not at the end of the container. If it was,
+            // use a data- attribute to communicate that.
+            var endRange = annotation.cfi.ranges[annotation.cfi.ranges.length - 1];
+            var endNode = endRange.endContainer;
+            var enclosingNode;
+  
+            // If the end node is a text node, get its parent.
+            if (endNode.nodeType == Node.TEXT_NODE) {
+                enclosingNode = endNode.parentNode
+            } else {
+                enclosingNode = endNode;
+                console.log(enclosingNode, "is not", endNode);
+            }
+
+            // Create a new text node at the offset and detach it.
+            var textNodeAfterOffset = $(endNode.splitText(endRange.endOffset))
+                                        .detach();
+
+            // Clone the original enclosing container, empty it, and add
+            // the text node.
+            var enclosingNodeCopy = $(enclosingNode)
+                                      .clone()
+                                      .empty()
+                                      .append(textNodeAfterOffset);
+
+            // Insert the enclosing node copy after the enclosing node.
+            $(enclosingNodeCopy).insertAfter($(enclosingNode));
+
+            // Now create a new node for the note text.
+            var noteNode = document.createElement("div");
+            $(noteNode).attr('class', '-BookKit-Behavior-NoteSplitter-Note');
+            $(noteNode).attr('id', 
+                '-BookKit-Behavior-NoteSplitter-Note-' + annotation.cfi.safeAttr());
+            $(noteNode).html(annotation.options.noteText);
+            $(noteNode).insertAfter($(enclosingNode));
+
+            // Trigger a layout change, since this shifts all content
+            // below the new nodes down the page.
+            $(document).trigger('presentationChanged');
+       
+        };
+
+        // Remove our custom DOM element, and merge the ending range
+        // of the annotation's endContainer with the element
+        // following our custom element — IF the end of the
+        // range was not at the end of the container originally. 
+        //
+        // If annotation is not given any matching note element will be
+        // closed.
+        base.closeNote = function(annotation) {
+            var existing;
+
+            if (annotation != undefined)
+                existing = $('.-BookKit-Behavior-NoteSplitter-Note-' + annotation.cfi.safeAttr());
+            else
+                existing = $('.-BookKit-Behavior-NoteSplitter-Note');
+
+            $(existing).each(function() {
+                // Get the original node and the copy we made when we
+                // split it into two.
+                var noteElement = this;
+                console.log(noteElement);
+                var enclosingNode = $(noteElement).prev();
+                console.log("enclosingNode", enclosingNode);
+                var enclosingNodeCopy = $(noteElement).next();
+                console.log("enclosingNodeCopy", enclosingNodeCopy);
+
+                // Get the text out of the copy node to add back into
+                // the original node.
+                var textNodeAfterOffset = $(enclosingNodeCopy[0].firstChild).detach();
+
+                // Append the text node to the original node
+                $(enclosingNode).append(textNodeAfterOffset);
+
+                // Remove the copy node.
+                $(enclosingNodeCopy).remove();
+                
+                // Normalize the original node (so that new CFIs don't
+                // have unresolvable steps).
+                enclosingNode[0].normalize();
+
+                // Remove the note node
+                $(noteElement).remove();
+            });
+
+            // Trigger a layout change, since this shifts all content
+            // back to its original position
+            $(document).trigger('presentationChanged');
+        };
 
         base.init = function() {
-            $(document).on('presented', function() {
-                $(base.presentation.options.presentationElement).on('click', function(e) {
-                    console.log("clicked");
+            $(document).on('presented', function(e, presentation) {
+                base.presentation = presentation;
+                base.$el = $(base.presentation.options.presentationElement);
+                
+                base.$el.on('click', function(e) {
+                    var clickedAnnotation;
+                    $.each(BookKit.Annotations, function(index, annotation) {
+                        if (annotation.cfi.containsPoint(e.clientX, e.clientY) && 
+                                annotation.options.note) {
+                            clickedAnnotation = annotation;
+                        }
+                    });
 
+                    if (clickedAnnotation != undefined) {
+                        // If we have a clicked note annotation and it's not
+                        // already opened, open it
+                        base.openNote(clickedAnnotation);
+                    } else {
+                        // If we don't have a clicked note annotation, close
+                        // any open ones.
+                        var existing = $('.-BookKit-Behavior-NoteSplitter-Note');
+                        if (existing.length > 0) {
+                            console.log("closing notes");
+                            base.closeNote();
+                        }
+                    }
+                    
                 });
             });
         };

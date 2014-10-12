@@ -241,6 +241,7 @@ var BookKit = BookKit || {};
             // Behaviors
             behaviors: {
                 navigation: new BookKit.Behavior.Navigate(),
+                notesplitter: new BookKit.Behavior.NoteSplitter(),
             },
         };
 
