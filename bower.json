@@ -1,5 +1,12 @@
 {
   "name": "bookkit",
+  "version": "0.1",
+  "authors": [
+    "Will Barton <g@gulielmus.com>"
+  ],
+  "license": "BSD",
+  "private": true,
+    
   "dependencies": {
     "jquery": "~2.1.0",
     "underscore": "~1.6.0",
@@ -8,18 +15,11 @@
     "Tocca.js": "*",
     "html2canvas": "~0.4.1"
   },
-  "version": "0.1",
-  "authors": [
-    "Will Barton <g@gulielmus.com>"
-  ],
-  "license": "BSD",
-  "private": true,
   "ignore": [
     "**/.*",
-    "node_modules",
+    "bookkit",
     "bower_components",
     "test",
-    "tests",
     "docs"
   ],
   "devDependencies": {
