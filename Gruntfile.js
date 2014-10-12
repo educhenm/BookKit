@@ -14,6 +14,17 @@ module.exports = function(grunt) {
                 dest: 'dist/js/<%= pkg.name %>.js'
             },
         },
+        bower: {
+            install: {
+                options: {
+                    install: true,
+                    verbose: false,
+                    cleanTargetDir: false,
+                    cleanBowerDir: false,
+                    bowerOptions: {}
+                }
+            }
+        },
         bower_concat: {
             all: {
                 dest: 'dist/js/bower_deps.js',
@@ -35,6 +46,7 @@ module.exports = function(grunt) {
             dist: {
                 files: {
                     'dist/js/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
+                    // 'dist/js/bower_deps.min.js': ['<%= bower_concat.all.dest %>']
                 }
             }
         },
@@ -42,7 +54,7 @@ module.exports = function(grunt) {
             main: {
                 expand: true, 
                 cwd: 'bookkit/', 
-                src: ['**'], 
+                src: ['css/*'], 
                 dest: 'dist/',
             },
         },
@@ -57,8 +69,11 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-bower-concat');
+    grunt.loadNpmTasks('grunt-bower-task');
 
     grunt.registerTask('test', ['qunit']);
     grunt.registerTask('default', ['clean', 'copy', 'concat', 'uglify']);
+    grunt.registerTask('all', ['clean', 'copy', 'bower', 'bower_concat', 'concat', 'uglify']);
+    grunt.registerTask('deps', ['bower', 'bower_concat']);
 }
 
