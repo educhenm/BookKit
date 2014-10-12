@@ -1,0 +1,61 @@
+
+#-BookKit-Presentation {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  font-family: "Helvetica Neue", Helvetica, sans-serif;
+  font-weight: 200;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.-BookKit-Presentation-MenuController {
+  display: inline-block;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 5px;
+  pointer-events: all;
+  color: white;
+  /* padding: 0.5em 1em; */
+  
+}
+.-BookKit-Presentation-MenuController:after {
+  top: 100%;
+  left: 50%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+  border-color: transparent;
+  border-top-color: rgba(0, 0, 0, 0.75);
+  border-width: 5px;
+  margin-left: -5px;
+}
+.-BookKit-Presentation-MenuController .-BookKit-Presentation-MenuController-Menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.-BookKit-Presentation-MenuController ul li {
+  display: inline-block;
+  border-right: 1px solid rgba(0, 0, 0, 0.90);
+  padding: 0.5em 1em;
+}
+.-BookKit-Presentation-MenuController ul li:last-child {
+  border-right: 0;
+}
+
+.-BookKit-Behavior-NoteSplitter-Note {
+  border-top: 1px solid #eeeeee;
+  border-bottom: 1px solid #eeeeee;
+  background-color: #fafafa;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-family: Marker Felt, Sans-serif;
+
+}
