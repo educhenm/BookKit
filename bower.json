@@ -12,8 +12,6 @@
     "underscore": "~1.6.0",
     "font-awesome": "~4.0.3",
     "fontloader": "~0.1.4",
-    "Tocca.js": "*",
-    "html2canvas": "~0.4.1"
   },
   "ignore": [
     "**/.*",
