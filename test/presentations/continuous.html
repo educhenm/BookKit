@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" 
+      xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <meta charset="utf-8">
+    <title>BookKit.Presentation Tests</title>
+
+    <link rel="stylesheet" href="../../bower_components/qunit/qunit/qunit.css">
+    <script type="text/javascript" src="../../bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../../bower_components/qunit/qunit/qunit.js"></script>
+    
+  </head>
+  <body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+
+    <iframe id="test-content" src="../content.html" height="460" width="320"></iframe>
+    
+    <script>
+    var $$ = jQuery.noConflict(true);
+    var $ = jQuery = null;
+
+    $$('#test-content').on('load', function() {
+
+        // Get the jQuery Object from the original code
+        var frame = window.frames[0];
+        $ = frame.jQuery;
+        BookKit = frame.BookKit;
+
+        // Set up the document portion of CFIs 
+        BookKit.CFI.documentStep = "/6/12!";
+    
+        QUnit.module("Presentation");
+
+        QUnit.test("create presentation", function(assert) {
+            var presentation = new BookKit.Presentation();
+            assert.ok(true, "presented");
+        });
+
+    });
+
+  </script>
+</body>
+</html>
+
+
+
+

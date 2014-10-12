@@ -19,9 +19,12 @@
     <div id="qunit-fixture"></div>
 
     <script>
-    QUnit.testSuites([
-        "cfi.html",
-        "annotation.html",
+    QUnit.testSuites("BookKit Tests", [
+        {name:"CFI", path:"cfi.html"},
+        {name:"Annotation", path:"annotation.html"},
+        {name:"Presentation", path:"presentations/index.html"},
+        {name:"Layer", path:"layers/index.html"},
+        {name:"Behavior", path:"behaviors/index.html"},
     ]);
     </script>
   </body>
