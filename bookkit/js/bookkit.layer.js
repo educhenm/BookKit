@@ -127,8 +127,8 @@ BookKit.Layer = BookKit.Layer || {};
                 canvas_context.fillStyle = "#000000";
                 canvas_context.textAlign = 'left';
                 canvas_context.textBaseline = 'top';
-                canvas_context.font = originalRect.height + "px FontAwesome";
-                canvas_context.fillText("\uf02e", rect.left, rect.top);
+                // canvas_context.font = originalRect.height + "px FontAwesome";
+                // canvas_context.fillText("\uf02e", rect.left, rect.top);
 
                 BookKit.Annotations[cfi.cfistring].rects.push(rect);
             }
@@ -161,8 +161,8 @@ BookKit.Layer = BookKit.Layer || {};
                 canvas_context.fillStyle = base.options.colors.note[color];
                 canvas_context.textAlign = 'left';
                 canvas_context.textBaseline = 'top';
-                canvas_context.font = rect.height + "px FontAwesome";
-                canvas_context.fillText("\uF075", rect.left, rect.top);
+                // canvas_context.font = rect.height + "px FontAwesome";
+                // canvas_context.fillText("\uF075", rect.left, rect.top);
 
                 BookKit.Annotations[cfi.cfistring].rects.push(rect);
             }
