@@ -41,7 +41,7 @@ BookKit.Layer = BookKit.Layer || {};
     //
     // WebKit-only because of the use of `webkit-canvas()` in
     // background.
-    BookKit.Layer.AnnotationCanvass = function(options) {
+    BookKit.Layer.AnnotationCanvas = function(options) {
         var base = this;
         
         var defaults = {

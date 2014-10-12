@@ -87,7 +87,7 @@ var BookKit = BookKit || {};
             },
             // Presentation Layers
             layers: {
-                annotation: new BookKit.Layer.AnnotationCanvass(),
+                annotation: new BookKit.Layer.AnnotationCanvas(),
             },
         };
 
