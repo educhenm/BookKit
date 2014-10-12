@@ -201,13 +201,13 @@ var BookKit = BookKit || {};
 
         var defaults = {
             // Number of columns in the viewport
-            columns: 2,
+            columns: 1,
 
             // Number of columns to scroll when moving to next "page"
-            columnsToScroll: 2,
+            columnsToScroll: 1,
 
             // Column to start at
-            columnToStart: 5,
+            columnToStart: 0,
 
             // Behaviors
             behaviors: {

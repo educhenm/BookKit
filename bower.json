@@ -11,12 +11,17 @@
     "jquery": "~2.1.0",
     "underscore": "~1.6.0"
   },
+  "main": ["dist/js/bookkit.js", "dist/css/bookkit.presentation.css"],
   "ignore": [
     "**/.*",
     "bookkit",
     "bower_components",
     "test",
-    "docs"
+    "lib",
+    "test",
+    "*.md",
+    "Gruntfile.js",
+    "package.json"
   ],
   "devDependencies": {
     "qunit": "~1.15.0",
