@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+  </head>
+<body>
+  <p id="p">foobar</p>
+
+  <script type="text/javascript">
+    /*
+    var p = document.getElementById('p');
+    var textnode = p.firstChild;
+
+    // split between foo and bar
+    var newText = textnode.splitText(3);
+    var copy = document.createElement(p.tagName);
+    copy.appendChild(p.lastChild);
+    */
+    var $p = $('#p');
+    var textnode = $p[0].firstChild;
+    var $newtext = $(textnode.splitText(3)).detach();
+    var $copy = $p.clone().empty().append($newtext);
+    $copy.insertAfter($p);
+
+    // Merge back
+    var oldtext = $($copy[0].firstChild).detach();
+    console.log(oldtext);
+    $p.append(oldtext);
+    $copy.remove();
+    $p[0].normalize();
+
+  </script>
+</body>
+</html>

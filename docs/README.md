@@ -43,11 +43,13 @@ Behaviors handle events that modify the presentation in some way.
 
 `BookKit.CFI` represents EPUB CFI objects by parsing EPUB CFI strings into `steps` and resolving those steps in the current document. CFIs can be initialized with pre-parsed and pre-resolved steps and ranges, and can be initialized and then parsed and resolved later.
 
-### CFI Creation
+### Globals
 
 #### `BookKit.CFI.documentStep`
 
 This *must be set* for CFIs that are generated to be valid. It's the string that corropsonds to the document step of the CFI, i.e. `/6/12!` in `epubcfi(/6/12!/4/2/4/2,/1:0,/1:22)`. It should be set before any CFIs are created.
+
+### Constructors
 
 #### `BookKit.CFI.selectionCFI()`
 
@@ -66,8 +68,6 @@ If `steps` is given as a list of parsed CFI steps, it is assumed to be valid for
 If `range` and `ranges` are given, they are assumed to be valid for the `cfistring`, and the CFI steps will not be resolved.
 
 ### CFI Objects
-
-CFI objects have the following properties:
 
 #### Properties 
 
@@ -105,27 +105,29 @@ Make this CFI the active window selection.
 
 `BookKit.Annotation` represents CFIs created by users to annotate an EPUB with bookmarks, highlights/underlines, or text notes. They are the marginalia of digital reading. 
 
+### Globals
 
-### Annotation Creation
+#### `BookKit.Annotations`
 
-BookKit keeps a global array of annotations that exist for the current XHTML document, `BookKit.Annotations`. When using the `addAnnotation()` and `removeAnnotation()` functions to create annotation objects the annotations are added to this array. In addition both functions also trigger events, `addedAnnotation` and `removedAnnotation` respectively.
-
-#### `BookKit.Annotation.addAnnotation(cfiOrString, annotationProps)`
-
-Returns a new `BookKit.Annotation` object for the given `BookKit.CFI` object or CFI string with the given properties (see below). 
-
-This function also adds the annotation to the global `BookKit.Annotaitons` array and triggers the event `addedAnnotation`.
-
-#### `new BookKit.Annotations(options)`
-
-Return a new `BookKit.Annotation` object with the given properties (see below). Annotations created in this way do not get added to the global `BookKit.Annotations` array and the `addedAnnotation` event is not triggered.
-
-### Annotation Removal
+A global object containing annotations added using `addAnnotation()`. 
 
 #### `BookKit.Annotation.removeAnnotation(annotationOrCFI)`
 
 Removes the given `BookKit.Annotation` object or annotation associated with the given `BookKit.CFI` or CFI string from the global `BookKit.Annotations` array and triggres the global event `removedAnnotation`.
 
+### Constructors
+
+BookKit keeps a global object of annotations that exist for the current XHTML document, `BookKit.Annotations`. When using the `addAnnotation()` and `removeAnnotation()` functions to create annotation objects the annotations are added to this array. In addition both functions also trigger events, `addedAnnotation` and `removedAnnotation` respectively.
+
+#### `BookKit.Annotation.addAnnotation(cfiOrString, annotationProps)`
+
+Returns a new `BookKit.Annotation` object for the given `BookKit.CFI` object or CFI string with the given properties (see below). 
+
+This function also adds the annotation to the global `BookKit.Annotaitons` object and triggers the event `addedAnnotation`.
+
+#### `new BookKit.Annotations(options)`
+
+Return a new `BookKit.Annotation` object with the given properties (see below). Annotations created in this way do not get added to the global `BookKit.Annotations` array and the `addedAnnotation` event is not triggered.
 
 ### Annotation Objects
 
@@ -169,9 +171,21 @@ There would usually only ever be one presentation object created for one XHTML d
 
 For example: the default BookKit presentation creates CSS3 columns. A default layer creates a canvas on which annotations are drawn. Default behaviors include navigation (scrolling left and right to previous and next columns) and highlighting (creating a new annotation for a selection).
 
-### Presentation Creation
+### Constructors
 
 #### `new BookKit.Presentation(options)`
+
+### Events 
+
+There are several events associated with BookKit Presentations that Layers and Behaviors may wish to be aware of.
+
+#### `presented`
+
+This event is triggered when the document is ready and has been layed out by a presentation. Layers can then create and position themselves as necessary and Behaviors can add their respective event listeners, etc. `presented` includes the particular `BookKit.Presentation` object as an argument.
+
+#### `presentationChanged`
+
+This event can be triggered any time the size or position of the content being presented is changed. It may be triggered by layers, behavior, or the presentation itself.
 
 ### Presentation Objects
 

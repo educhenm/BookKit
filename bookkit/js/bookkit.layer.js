@@ -193,8 +193,11 @@ BookKit.Layer = BookKit.Layer || {};
         };
         
         // Redraw the entire annotation canvas.
-        refresh = function() {
-            // $('body').css({'background-image':"url(" + this.canvas.toDataURL("image/png")+ ")" });
+        redraw = function() {
+            $.each(BookKit.Annotations, function(index, annotation) {
+                remove(annotation);
+                render(annotation);
+            });
         };
 
         render = function(annotation) {
@@ -210,17 +213,17 @@ BookKit.Layer = BookKit.Layer || {};
                 renderNote(annotation);
         };
 
-        base.remove = function(annotation) {
+        remove = function(annotation) {
             // It doesn't matter whether we're removing a bookmark, note, or
             // highlight. We need to clear the canvas rects for all types.
-            var rects = BookKit.Annotations[cfi.cfistring].rects;
+            var rects = BookKit.Annotations[annotation.cfi.cfistring].rects;
             // var canvas_context = this.canvas.getContext('2d');
             var canvas_context = canvasContext();
 
             _.each(rects, function(rect, index, rects) {
                 canvas_context.clearRect(rect.left, rect.top, rect.width, rect.height);
             });
-            BookKit.Annotations[cfi.cfistring].rects = [];
+            BookKit.Annotations[annotation.cfi.cfistring].rects = [];
         };
           
         // Initialization
@@ -243,22 +246,23 @@ BookKit.Layer = BookKit.Layer || {};
                 // This is webkit only.
                 base.$el.css('background','-webkit-canvas(-BookKit-Annotation-Canvas) no-repeat');
                 base.canvas = canvas;
-                refresh();
 
                 // Render existing annotations
                 _.each(BookKit.Annotations, function(annotation, cfi) {
                     render(annotation);
-                    refresh();
                 });
             });
 
             $(document).on('addedAnnotation', function(e, annotation) {
                 render(annotation);
-                refresh();
             });
 
             $(document).on('removedAnnotation', function(e, annotation) {
                 remove(annotation);
+            });
+
+            $(document).on('presentationChanged', function(e) {
+                redraw();
             });
 
         };

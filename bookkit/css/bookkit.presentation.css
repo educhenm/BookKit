@@ -49,3 +49,13 @@
 .-BookKit-Presentation-MenuController ul li:last-child {
   border-right: 0;
 }
+
+.-BookKit-Behavior-NoteSplitter-Note {
+  border-top: 1px solid #eeeeee;
+  border-bottom: 1px solid #eeeeee;
+  background-color: #fafafa;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-family: Marker Felt, Sans-serif;
+
+}

@@ -373,7 +373,7 @@ var _parsed_cfis = BookKit._parsed_cfis = {};
             //    epubcfi_6_12_4_2episode-01_68_1_2
             // For use in id attributes on elements. It's a lossy
             // conversion, not intended for reconstituting the string.
-            var cfistring = this.options.cfistring;
+            var cfistring = base.cfistring;
             return cfistring.replace(/[\:\/\,]/g, '_').replace(/[\!\(\)\[\]]/g, '');
         };
 
