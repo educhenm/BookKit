@@ -1236,17 +1236,17 @@ BookKit.Layer = BookKit.Layer || {};
         base.width = null;
         base.height = null;
 
-        canvasContext = function() {
+        base.canvasContext = function() {
             var canvas_context = document.getCSSCanvasContext('2d', 
                 '-BookKit-Annotation-Canvas', base.width, base.height);
             return canvas_context;
         };
 
-        renderHighlight = function(annotation) {
+        base.renderHighlight = function(annotation) {
             var cfi = annotation.cfi;
             var style = annotation.options.highlightStyle;
             var color = annotation.options.highlightColor;
-            var canvas_context = canvasContext();
+            var canvas_context = base.canvasContext();
 
             _.each(cfi.ranges, function(range, index, ranges) {
                 _.each(range.getClientRects(), function(rect, index, rects) {
@@ -1270,7 +1270,7 @@ BookKit.Layer = BookKit.Layer || {};
             });
         };
 
-        renderBookmark = function(annotation) {
+        base.renderBookmark = function(annotation) {
             var cfi = annotation.cfi;
             var style = annotation.options.bookmarkStyle;
             var color = annotation.options.bookmarkColor;
@@ -1279,7 +1279,7 @@ BookKit.Layer = BookKit.Layer || {};
                 // If we're to show the bookmark, add some content to the
                 // anchor and style and position it appropriately. 
                 // var canvas_context = this.canvas.getContext('2d');
-                var canvas_context = canvasContext();
+                var canvas_context = base.canvasContext();
                 var columnWidth = base.presentation.actualContentWidth();
                 var originalRect = cfi.ranges[0].getClientRects()[0];
                 var columnNumber = base.presentation.currentContentPosition(originalRect.left);
@@ -1296,14 +1296,14 @@ BookKit.Layer = BookKit.Layer || {};
                 canvas_context.fillStyle = "#000000";
                 canvas_context.textAlign = 'left';
                 canvas_context.textBaseline = 'top';
-                canvas_context.font = originalRect.height + "px FontAwesome";
-                canvas_context.fillText("\uf02e", rect.left, rect.top);
+                // canvas_context.font = originalRect.height + "px FontAwesome";
+                // canvas_context.fillText("\uf02e", rect.left, rect.top);
 
                 BookKit.Annotations[cfi.cfistring].rects.push(rect);
             }
         };
 
-        renderNote = function(annotation) {
+        base.renderNote = function(annotation) {
             var cfi = annotation.cfi;
             var note = annotation.options.noteText;
             var style = annotation.options.noteStyle;
@@ -1314,7 +1314,7 @@ BookKit.Layer = BookKit.Layer || {};
                 // as a highlight as well.
                 
                 // var canvas_context = this.canvas.getContext('2d');
-                var canvas_context = canvasContext();
+                var canvas_context = base.canvasContext();
                 var columnWidth = base.presentation.actualContentWidth();
                 var originalRect = cfi.ranges[0].getClientRects()[0];
                 var columnNumber = base.presentation.currentContentPosition(originalRect.left);
@@ -1330,8 +1330,8 @@ BookKit.Layer = BookKit.Layer || {};
                 canvas_context.fillStyle = base.options.colors.note[color];
                 canvas_context.textAlign = 'left';
                 canvas_context.textBaseline = 'top';
-                canvas_context.font = rect.height + "px FontAwesome";
-                canvas_context.fillText("\uF075", rect.left, rect.top);
+                // canvas_context.font = rect.height + "px FontAwesome";
+                // canvas_context.fillText("\uF075", rect.left, rect.top);
 
                 BookKit.Annotations[cfi.cfistring].rects.push(rect);
             }
@@ -1339,24 +1339,24 @@ BookKit.Layer = BookKit.Layer || {};
         };
         
         // Redraw the entire annotation canvas.
-        redraw = function() {
+        base.redraw = function() {
             $.each(BookKit.Annotations, function(index, annotation) {
-                remove(annotation);
-                render(annotation);
+                base.remove(annotation);
+                base.render(annotation);
             });
         };
 
-        render = function(annotation) {
+        base.render = function(annotation) {
             BookKit.Annotations[annotation.cfi.cfistring].rects = [];
 
             if (annotation.options.bookmark)
-                renderBookmark(annotation);
+                base.renderBookmark(annotation);
 
             if (annotation.options.highlight)
-                renderHighlight(annotation);
+                base.renderHighlight(annotation);
 
             if (annotation.options.note)
-                renderNote(annotation);
+                base.renderNote(annotation);
         };
 
         remove = function(annotation) {
@@ -1364,7 +1364,7 @@ BookKit.Layer = BookKit.Layer || {};
             // highlight. We need to clear the canvas rects for all types.
             var rects = BookKit.Annotations[annotation.cfi.cfistring].rects;
             // var canvas_context = this.canvas.getContext('2d');
-            var canvas_context = canvasContext();
+            var canvas_context = base.canvasContext();
 
             _.each(rects, function(rect, index, rects) {
                 canvas_context.clearRect(rect.left, rect.top, rect.width, rect.height);
@@ -1401,20 +1401,20 @@ BookKit.Layer = BookKit.Layer || {};
 
                 // Render existing annotations
                 _.each(BookKit.Annotations, function(annotation, cfi) {
-                    render(annotation);
+                    base.render(annotation);
                 });
             });
 
             $(document).on('addedAnnotation', function(e, annotation) {
-                render(annotation);
+                base.render(annotation);
             });
 
             $(document).on('removedAnnotation', function(e, annotation) {
-                remove(annotation);
+                base.remove(annotation);
             });
 
             $(document).on('presentationChanged', function(e) {
-                redraw();
+                base.redraw();
             });
 
         };
@@ -1668,13 +1668,13 @@ var BookKit = BookKit || {};
 
         var defaults = {
             // Number of columns in the viewport
-            columns: 2,
+            columns: 1,
 
             // Number of columns to scroll when moving to next "page"
-            columnsToScroll: 2,
+            columnsToScroll: 1,
 
             // Column to start at
-            columnToStart: 5,
+            columnToStart: 0,
 
             // Behaviors
             behaviors: {
