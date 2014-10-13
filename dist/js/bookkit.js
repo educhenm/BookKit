@@ -1527,11 +1527,9 @@ var BookKit = BookKit || {};
             
             // Behaviors
             behaviors: {
-                highlights: new BookKit.Behavior.HighlightImmediately(),
             },
             // Presentation Layers
             layers: {
-                annotation: new BookKit.Layer.AnnotationCanvas(),
             },
         };
 
@@ -1678,8 +1676,6 @@ var BookKit = BookKit || {};
 
             // Behaviors
             behaviors: {
-                navigation: new BookKit.Behavior.Navigate(),
-                notesplitter: new BookKit.Behavior.NoteSplitter(),
             },
         };
 
