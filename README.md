@@ -1,6 +1,6 @@
 # BookKit
 
-BookKit is a JavaScript library for reading EPUB files. In particularly, it is a well-documented, modular, flexible library from which a competent EPUB reader can be built.
+BookKit is a JavaScript library for reading EPUB files. In particularly, it is intended to be a well-documented, modular, flexible library from which a competent EPUB reader can be built.
 
 BookKit is particularly concerned with annotations. This is one area where ebook readers should excel: a physical book's marginalia is limited to a single copy, but ebook annotations have the potential to be so much more. BookKit's intent is to focus on annotations, making CFIs a bit simpler to handle within the browser (or web view) and hopefully make the overall portability of annotations a bit easier.
 
@@ -10,12 +10,17 @@ BookKit is ©2012-2014 Will Barton, licensed under a BSD-style license. The thir
 
 BookKit should be injected into an EPUB XHTML file within a web browser or web view within an application. 
 
+To build BookKit, simply run:
+
+    grunt all
+
+And BookKit and its dependencies will be minified in the `dist`
+directory.
+
 Once an ePub file is decompressed and one of its XHTML files opened, the following needs to be injected into the header (paths should be adjusted as necessary):
 
-    <link rel="stylesheet" href="/bower_components/font-awesome/css/font-awesome.min.css"/>
-    <script type="text/javascript" src="/bower_components/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="/bower_components/underscore/underscore.js"></script>
-    <script type="text/javascript" src="/bower_components/fontloader/fontloader.js"></script>
+    <link rel="stylesheet" href="/dist/css/bower_deps.css"/>
+    <script type="text/javascript" src="/dist/js/bower_deps.js"></script>
     <script type="text/javascript" src="/dist/js/bookkit.min.js"></script>
     <link rel="stylesheet" href="/dist/css/bookkit.presentation.css"/>
 
